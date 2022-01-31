@@ -8,7 +8,7 @@ use restson::{Error as RestError, Response as RestResponse, RestClient, RestPath
 use serde::Deserialize;
 use serde_json::Value;
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 pub struct JiraIssue {
     pub id: String,
     pub key: String,
@@ -20,7 +20,7 @@ pub struct JiraIssue {
     pub extra: HashMap<String, Value>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 pub struct Fields {
     #[serde(rename = "lastViewed")]
     pub last_viewed: Option<String>,
@@ -64,7 +64,7 @@ pub struct Fields {
     pub extra: HashMap<String, Value>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 pub struct User {
     pub active: bool,
     #[serde(rename = "displayName")]
@@ -83,7 +83,7 @@ pub struct User {
     pub extra: HashMap<String, Value>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 pub struct Version {
     pub id: String,
     pub description: Option<String>,
@@ -98,7 +98,7 @@ pub struct Version {
     pub extra: HashMap<String, Value>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 pub struct Status {
     pub description: String,
     #[serde(rename = "iconUrl")]
@@ -113,7 +113,7 @@ pub struct Status {
     pub extra: HashMap<String, Value>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 pub struct StatusCategory {
     #[serde(rename = "colorName")]
     pub color_name: String,
@@ -126,7 +126,7 @@ pub struct StatusCategory {
     pub extra: HashMap<String, Value>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 pub struct Resolution {
     pub description: String,
     pub id: String,
@@ -137,7 +137,7 @@ pub struct Resolution {
     pub extra: HashMap<String, Value>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 pub struct IssueType {
     #[serde(rename = "avatarId")]
     pub avatar_id: i32,
@@ -153,7 +153,7 @@ pub struct IssueType {
     pub extra: HashMap<String, Value>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 pub struct Project {
     pub id: String,
     pub key: String,
@@ -170,7 +170,7 @@ pub struct Project {
     pub extra: HashMap<String, Value>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 pub struct ProjectCategory {
     pub description: String,
     pub id: String,
@@ -181,7 +181,7 @@ pub struct ProjectCategory {
     pub extra: HashMap<String, Value>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 pub struct Priority {
     #[serde(rename = "iconUrl")]
     pub icon_url: String,
@@ -193,7 +193,7 @@ pub struct Priority {
     pub extra: HashMap<String, Value>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 pub struct Component {
     pub description: Option<String>,
     pub id: String,
@@ -204,7 +204,7 @@ pub struct Component {
     pub extra: HashMap<String, Value>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 pub struct Watches {
     #[serde(rename = "isWatching")]
     pub is_watching: bool,
@@ -216,7 +216,7 @@ pub struct Watches {
     pub extra: HashMap<String, Value>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 pub struct Progress {
     pub progress: i32,
     pub total: i32,
@@ -224,7 +224,7 @@ pub struct Progress {
     pub extra: HashMap<String, Value>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 pub struct Comment {
     pub author: User,
     pub body: String,
@@ -240,7 +240,7 @@ pub struct Comment {
     pub extra: HashMap<String, Value>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 pub struct Comments {
     pub comments: Vec<Comment>,
     #[serde(rename = "maxResults")]
@@ -252,7 +252,7 @@ pub struct Comments {
     pub extra: HashMap<String, Value>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 pub struct IssueLink {
     pub id: String,
     #[serde(rename = "outwardIssue")]
@@ -267,7 +267,7 @@ pub struct IssueLink {
     pub extra: HashMap<String, Value>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 pub struct LinkedIssue {
     pub id: String,
     pub key: String,
@@ -278,7 +278,7 @@ pub struct LinkedIssue {
     pub extra: HashMap<String, Value>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 pub struct LinkedIssueFields {
     pub issuetype: IssueType,
     pub priority: Option<Priority>,
@@ -288,7 +288,7 @@ pub struct LinkedIssueFields {
     pub extra: HashMap<String, Value>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 pub struct IssueLinkType {
     pub id: String,
     pub inward: String,
@@ -300,7 +300,7 @@ pub struct IssueLinkType {
     pub extra: HashMap<String, Value>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 pub struct Votes {
     #[serde(rename = "hasVoted")]
     pub has_voted: bool,
@@ -311,7 +311,7 @@ pub struct Votes {
     pub extra: HashMap<String, Value>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 pub struct AvatarUrls {
     #[serde(rename = "16x16")]
     pub xsmall: String,
@@ -325,7 +325,7 @@ pub struct AvatarUrls {
     pub extra: HashMap<String, Value>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 pub struct CondensedIssue {
     pub fields: CondensedFields,
     pub id: String,
@@ -336,7 +336,7 @@ pub struct CondensedIssue {
     pub extra: HashMap<String, Value>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 pub struct CondensedFields {
     pub issuetype: IssueType,
     pub priority: Priority,
@@ -346,7 +346,7 @@ pub struct CondensedFields {
     pub extra: HashMap<String, Value>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 pub struct Visibility {
     pub r#type: String,
     pub value: String,
