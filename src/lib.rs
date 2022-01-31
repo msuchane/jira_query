@@ -4,6 +4,7 @@
 
 use std::collections::HashMap;
 
+use log::debug;
 use restson::{Error as RestError, Response as RestResponse, RestClient, RestPath};
 use serde::Deserialize;
 use serde_json::Value;
@@ -369,7 +370,7 @@ pub fn issue(host: &str, issue: &str, api_key: &str) -> JiraIssue {
     // Gets a bug by ID and deserializes the JSON to data variable
     let data: RestResponse<JiraIssue> = client.get(issue).unwrap();
     let issue = data.into_inner();
-    println!("{:#?}", issue);
+    debug!("{:#?}", issue);
 
     issue
 }
