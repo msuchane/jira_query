@@ -10,6 +10,13 @@ use serde::Deserialize;
 use serde_json::Value;
 
 #[derive(Clone, Debug, Deserialize)]
+pub struct JqlResults {
+    pub issues: Vec<JiraIssue>,
+    #[serde(flatten)]
+    pub extra: HashMap<String, Value>,
+}
+
+#[derive(Clone, Debug, Deserialize)]
 pub struct JiraIssue {
     pub id: String,
     pub key: String,
@@ -56,7 +63,7 @@ pub struct Fields {
     pub archivedby: Option<String>,
     pub resolution: Option<Resolution>,
     pub resolutiondate: Option<String>,
-    pub comment: Comments,
+    pub comment: Option<Comments>,
     pub issuelinks: Vec<IssueLink>,
     pub votes: Votes,
     pub parent: Option<CondensedIssue>,
@@ -355,7 +362,7 @@ pub struct Visibility {
     pub extra: HashMap<String, Value>,
 }
 
-// API call with one String parameter (e.g. "https://issues.redhat.com/rest/api/2/issue/RHELPLAN-12345")
+// API call with one &str parameter (e.g. "https://issues.redhat.com/rest/api/2/issue/RHELPLAN-12345")
 impl RestPath<&str> for JiraIssue {
     fn get_path(param: &str) -> Result<String, RestError> {
         Ok(format!("rest/api/2/issue/{}", param))
@@ -375,6 +382,30 @@ pub fn issue(host: &str, issue: &str, api_key: &str) -> JiraIssue {
     issue
 }
 
+// API call with several &str parameters representing the IDs of issues.
+// TODO: Make this generic over &[&str] and &[String].
+impl RestPath<&[&str]> for JqlResults {
+    fn get_path(params: &[&str]) -> Result<String, RestError> {
+        Ok(format!(
+            "rest/api/2/search?jql=id%20in%20({})",
+            params.join(",")
+        ))
+    }
+}
+
+pub fn issues(host: &str, issues: &[&str], api_key: &str) -> Vec<JiraIssue> {
+    let mut client = RestClient::builder().blocking(host).unwrap();
+    client
+        .set_header("Authorization", &format!("Bearer {}", api_key))
+        .unwrap();
+    // Gets a bug by ID and deserializes the JSON to data variable
+    let data: RestResponse<JqlResults> = client.get(issues).unwrap();
+    let results = data.into_inner();
+    debug!("{:#?}", results);
+
+    results.issues
+}
+
 #[cfg(test)]
 mod tests {
     #[test]
@@ -382,4 +413,10 @@ mod tests {
         let result = 2 + 2;
         assert_eq!(result, 4);
     }
+    // #[test]
+    // fn issues() {
+    //     let results = crate::issues("todo", &["todo"], "todo");
+    //     eprintln!("{:#?}", results);
+    //     assert_eq!(results.issues.len(), todo);
+    // }
 }
