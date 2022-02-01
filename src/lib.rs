@@ -5,7 +5,7 @@
 use std::collections::HashMap;
 
 use log::debug;
-use restson::{Error as RestError, Response as RestResponse, RestClient, RestPath};
+use restson::{Error, Response as RestResponse, RestClient, RestPath};
 use serde::Deserialize;
 use serde_json::Value;
 
@@ -364,28 +364,26 @@ pub struct Visibility {
 
 // API call with one &str parameter (e.g. "https://issues.redhat.com/rest/api/2/issue/RHELPLAN-12345")
 impl RestPath<&str> for JiraIssue {
-    fn get_path(param: &str) -> Result<String, RestError> {
+    fn get_path(param: &str) -> Result<String, Error> {
         Ok(format!("rest/api/2/issue/{}", param))
     }
 }
 
-pub fn issue(host: &str, issue: &str, api_key: &str) -> JiraIssue {
-    let mut client = RestClient::builder().blocking(host).unwrap();
-    client
-        .set_header("Authorization", &format!("Bearer {}", api_key))
-        .unwrap();
+pub fn issue(host: &str, issue: &str, api_key: &str) -> Result<JiraIssue, Error> {
+    let mut client = RestClient::builder().blocking(host)?;
+    client.set_header("Authorization", &format!("Bearer {}", api_key))?;
     // Gets a bug by ID and deserializes the JSON to data variable
-    let data: RestResponse<JiraIssue> = client.get(issue).unwrap();
+    let data: RestResponse<JiraIssue> = client.get(issue)?;
     let issue = data.into_inner();
     debug!("{:#?}", issue);
 
-    issue
+    Ok(issue)
 }
 
 // API call with several &str parameters representing the IDs of issues.
 // TODO: Make this generic over &[&str] and &[String].
 impl RestPath<&[&str]> for JqlResults {
-    fn get_path(params: &[&str]) -> Result<String, RestError> {
+    fn get_path(params: &[&str]) -> Result<String, Error> {
         Ok(format!(
             "rest/api/2/search?jql=id%20in%20({})",
             params.join(",")
@@ -393,17 +391,15 @@ impl RestPath<&[&str]> for JqlResults {
     }
 }
 
-pub fn issues(host: &str, issues: &[&str], api_key: &str) -> Vec<JiraIssue> {
-    let mut client = RestClient::builder().blocking(host).unwrap();
-    client
-        .set_header("Authorization", &format!("Bearer {}", api_key))
-        .unwrap();
+pub fn issues(host: &str, issues: &[&str], api_key: &str) -> Result<Vec<JiraIssue>, Error> {
+    let mut client = RestClient::builder().blocking(host)?;
+    client.set_header("Authorization", &format!("Bearer {}", api_key))?;
     // Gets a bug by ID and deserializes the JSON to data variable
-    let data: RestResponse<JqlResults> = client.get(issues).unwrap();
+    let data: RestResponse<JqlResults> = client.get(issues)?;
     let results = data.into_inner();
     debug!("{:#?}", results);
 
-    results.issues
+    Ok(results.issues)
 }
 
 #[cfg(test)]
