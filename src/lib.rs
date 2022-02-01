@@ -399,6 +399,7 @@ pub fn issues(host: &str, issues: &[&str], api_key: &str) -> Result<Vec<JiraIssu
     let results = data.into_inner();
     debug!("{:#?}", results);
 
+    // TODO: Note that the resulting list might be empty and still Ok
     Ok(results.issues)
 }
 
