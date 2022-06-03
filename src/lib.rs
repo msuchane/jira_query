@@ -7,7 +7,7 @@ use restson::{Error, Response as RestResponse, RestClient, RestPath};
 
 mod issue_model;
 
-use crate::issue_model::{JqlResults, Issue};
+pub use crate::issue_model::{JqlResults, Issue};
 
 
 // API call with one &str parameter (e.g. "https://issues.redhat.com/rest/api/2/issue/RHELPLAN-12345")
