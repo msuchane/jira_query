@@ -7,21 +7,21 @@ use restson::{Error, Response as RestResponse, RestClient, RestPath};
 
 mod issue_model;
 
-use crate::issue_model::{JqlResults, JiraIssue};
+use crate::issue_model::{JqlResults, Issue};
 
 
 // API call with one &str parameter (e.g. "https://issues.redhat.com/rest/api/2/issue/RHELPLAN-12345")
-impl RestPath<&str> for JiraIssue {
+impl RestPath<&str> for Issue {
     fn get_path(param: &str) -> Result<String, Error> {
         Ok(format!("rest/api/2/issue/{}", param))
     }
 }
 
-pub fn issue(host: &str, issue: &str, api_key: &str) -> Result<JiraIssue, Error> {
+pub fn issue(host: &str, issue: &str, api_key: &str) -> Result<Issue, Error> {
     let mut client = RestClient::builder().blocking(host)?;
     client.set_header("Authorization", &format!("Bearer {}", api_key))?;
     // Gets a bug by ID and deserializes the JSON to data variable
-    let data: RestResponse<JiraIssue> = client.get(issue)?;
+    let data: RestResponse<Issue> = client.get(issue)?;
     let issue = data.into_inner();
     debug!("{:#?}", issue);
 
@@ -39,7 +39,7 @@ impl RestPath<&[&str]> for JqlResults {
     }
 }
 
-pub fn issues(host: &str, issues: &[&str], api_key: &str) -> Result<Vec<JiraIssue>, Error> {
+pub fn issues(host: &str, issues: &[&str], api_key: &str) -> Result<Vec<Issue>, Error> {
     let mut client = RestClient::builder().blocking(host)?;
     client.set_header("Authorization", &format!("Bearer {}", api_key))?;
     // Gets a bug by ID and deserializes the JSON to data variable

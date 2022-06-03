@@ -9,13 +9,13 @@ use serde_json::Value;
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct JqlResults {
-    pub issues: Vec<JiraIssue>,
+    pub issues: Vec<Issue>,
     #[serde(flatten)]
     pub extra: HashMap<String, Value>,
 }
 
 #[derive(Clone, Debug, Deserialize)]
-pub struct JiraIssue {
+pub struct Issue {
     pub id: String,
     pub key: String,
     pub expand: String,
