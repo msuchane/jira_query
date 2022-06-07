@@ -6,6 +6,8 @@ use std::collections::HashMap;
 use serde::Deserialize;
 use serde_json::Value;
 
+/// The response from Jira to a JQL query,
+/// which includes the list of requested issues and additional metadata.
 #[derive(Clone, Debug, Deserialize)]
 pub struct JqlResults {
     pub issues: Vec<Issue>,
@@ -13,6 +15,7 @@ pub struct JqlResults {
     pub extra: HashMap<String, Value>,
 }
 
+/// A single Jira issue with all its fields.
 #[derive(Clone, Debug, Deserialize)]
 pub struct Issue {
     pub id: String,
@@ -25,6 +28,7 @@ pub struct Issue {
     pub extra: HashMap<String, Value>,
 }
 
+/// A container for most fields of a Jira issue.
 #[derive(Clone, Debug, Deserialize)]
 pub struct Fields {
     #[serde(rename = "lastViewed")]
@@ -69,6 +73,7 @@ pub struct Fields {
     pub extra: HashMap<String, Value>,
 }
 
+/// The representation of a Jira user account.
 #[derive(Clone, Debug, Deserialize)]
 pub struct User {
     pub active: bool,
@@ -88,6 +93,7 @@ pub struct User {
     pub extra: HashMap<String, Value>,
 }
 
+/// The representation of a Jira product version.
 #[derive(Clone, Debug, Deserialize)]
 pub struct Version {
     pub id: String,
@@ -103,6 +109,7 @@ pub struct Version {
     pub extra: HashMap<String, Value>,
 }
 
+/// The Jira issue status.
 #[derive(Clone, Debug, Deserialize)]
 pub struct Status {
     pub description: String,
@@ -118,6 +125,7 @@ pub struct Status {
     pub extra: HashMap<String, Value>,
 }
 
+/// The category of a Jira issue status.
 #[derive(Clone, Debug, Deserialize)]
 pub struct StatusCategory {
     #[serde(rename = "colorName")]
@@ -131,6 +139,7 @@ pub struct StatusCategory {
     pub extra: HashMap<String, Value>,
 }
 
+/// The resolution of a Jira issue when it's closed.
 #[derive(Clone, Debug, Deserialize)]
 pub struct Resolution {
     pub description: String,
@@ -142,6 +151,7 @@ pub struct Resolution {
     pub extra: HashMap<String, Value>,
 }
 
+/// The type of a Jira issue.
 #[derive(Clone, Debug, Deserialize)]
 pub struct IssueType {
     #[serde(rename = "avatarId")]
@@ -158,6 +168,7 @@ pub struct IssueType {
     pub extra: HashMap<String, Value>,
 }
 
+/// A project namespace that groups Jira issues.
 #[derive(Clone, Debug, Deserialize)]
 pub struct Project {
     pub id: String,
@@ -175,6 +186,7 @@ pub struct Project {
     pub extra: HashMap<String, Value>,
 }
 
+/// The category of a Jira project.
 #[derive(Clone, Debug, Deserialize)]
 pub struct ProjectCategory {
     pub description: String,
@@ -186,6 +198,7 @@ pub struct ProjectCategory {
     pub extra: HashMap<String, Value>,
 }
 
+/// The priority of a Jira issue.
 #[derive(Clone, Debug, Deserialize)]
 pub struct Priority {
     #[serde(rename = "iconUrl")]
@@ -198,6 +211,7 @@ pub struct Priority {
     pub extra: HashMap<String, Value>,
 }
 
+/// The component of a Jira issue.
 #[derive(Clone, Debug, Deserialize)]
 pub struct Component {
     pub description: Option<String>,
@@ -209,6 +223,7 @@ pub struct Component {
     pub extra: HashMap<String, Value>,
 }
 
+/// Users watching a Jira issue.
 #[derive(Clone, Debug, Deserialize)]
 pub struct Watches {
     #[serde(rename = "isWatching")]
@@ -221,6 +236,7 @@ pub struct Watches {
     pub extra: HashMap<String, Value>,
 }
 
+/// The progress of a Jira issue.
 #[derive(Clone, Debug, Deserialize)]
 pub struct Progress {
     pub progress: i32,
@@ -229,6 +245,7 @@ pub struct Progress {
     pub extra: HashMap<String, Value>,
 }
 
+/// A comment below a Jira issue.
 #[derive(Clone, Debug, Deserialize)]
 pub struct Comment {
     pub author: User,
@@ -245,6 +262,7 @@ pub struct Comment {
     pub extra: HashMap<String, Value>,
 }
 
+/// A container for all comments below a Jira issue.
 #[derive(Clone, Debug, Deserialize)]
 pub struct Comments {
     pub comments: Vec<Comment>,
@@ -257,6 +275,7 @@ pub struct Comments {
     pub extra: HashMap<String, Value>,
 }
 
+/// A link from one Jira issue to another.
 #[derive(Clone, Debug, Deserialize)]
 pub struct IssueLink {
     pub id: String,
@@ -272,6 +291,7 @@ pub struct IssueLink {
     pub extra: HashMap<String, Value>,
 }
 
+/// A Jira issue linked from another one.
 #[derive(Clone, Debug, Deserialize)]
 pub struct LinkedIssue {
     pub id: String,
@@ -283,6 +303,7 @@ pub struct LinkedIssue {
     pub extra: HashMap<String, Value>,
 }
 
+/// The reduced fields of a linked Jira issue.
 #[derive(Clone, Debug, Deserialize)]
 pub struct LinkedIssueFields {
     pub issuetype: IssueType,
@@ -293,6 +314,7 @@ pub struct LinkedIssueFields {
     pub extra: HashMap<String, Value>,
 }
 
+/// The direction of a link to a Jira issue.
 #[derive(Clone, Debug, Deserialize)]
 pub struct IssueLinkType {
     pub id: String,
@@ -305,6 +327,7 @@ pub struct IssueLinkType {
     pub extra: HashMap<String, Value>,
 }
 
+/// The votes for a Jira issue.
 #[derive(Clone, Debug, Deserialize)]
 pub struct Votes {
     #[serde(rename = "hasVoted")]
@@ -316,6 +339,12 @@ pub struct Votes {
     pub extra: HashMap<String, Value>,
 }
 
+/// A Jira avatar in several different sizes:
+///
+/// * `xsmall` = 16x16 px
+/// * `small` = 24x24 px
+/// * `medium` = 48x48 px
+/// * `full` = maximum
 #[derive(Clone, Debug, Deserialize)]
 pub struct AvatarUrls {
     #[serde(rename = "16x16")]
@@ -330,6 +359,7 @@ pub struct AvatarUrls {
     pub extra: HashMap<String, Value>,
 }
 
+/// A minimal, reduced representation of a Jira issue.
 #[derive(Clone, Debug, Deserialize)]
 pub struct CondensedIssue {
     pub fields: CondensedFields,
@@ -341,6 +371,7 @@ pub struct CondensedIssue {
     pub extra: HashMap<String, Value>,
 }
 
+/// A minimal, reduced listing of the fields of a Jira issue.
 #[derive(Clone, Debug, Deserialize)]
 pub struct CondensedFields {
     pub issuetype: IssueType,
@@ -351,6 +382,7 @@ pub struct CondensedFields {
     pub extra: HashMap<String, Value>,
 }
 
+/// The visibility of a Jira issue.
 #[derive(Clone, Debug, Deserialize)]
 pub struct Visibility {
     pub r#type: String,
