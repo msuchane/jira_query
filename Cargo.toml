@@ -9,7 +9,7 @@ readme = "README.md"
 documentation = "https://docs.rs/jira_query/"
 homepage = "https://github.com/msuchane/jira_query"
 repository = "https://github.com/msuchane/jira_query"
-keywords = ["jira", "rest"]
+keywords = ["jira", "atlassian", "rest"]
 categories = ["api-bindings"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html

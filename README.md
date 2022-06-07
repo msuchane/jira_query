@@ -13,3 +13,7 @@ This library provides no functionality to create or modify issues. The access is
 ## Usage
 
 To be added.
+
+## See also
+
+* [`bugzilla_query`](https://crates.io/crates/bugzilla_query), a similar interface to Bugzilla
