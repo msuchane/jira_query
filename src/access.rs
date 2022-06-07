@@ -3,8 +3,8 @@
 // * https://docs.atlassian.com/jira-software/REST/latest/
 
 use log::debug;
-use restson::{Error, Response as RestResponse, RestClient, RestPath};
 use restson::blocking::RestClient as BlockingRestClient;
+use restson::{Error, Response as RestResponse, RestClient, RestPath};
 
 use crate::issue_model::{Issue, JqlResults};
 
