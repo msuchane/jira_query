@@ -9,13 +9,21 @@ fn rh_jira() -> JiraInstance {
     }
 }
 
-/// Try accessing several public issues to test the client and the deserialization.
+/// Try accessing several public issues separately
+/// to test the client and the deserialization.
 #[test]
-fn access_issues() {
+fn access_issue() {
     let instance = rh_jira();
     let _issue1 = instance.issue("CS-1113").unwrap();
     let _issue2 = instance.issue("CS-1111").unwrap();
-    let _issues = instance.issues(&["CS-1086", "CS-1084"]);
+}
+
+/// Try accessing several public issues at once
+/// to test the client and the deserialization.
+#[test]
+fn access_issues() {
+    let instance = rh_jira();
+    let _issues = instance.issues(&["CS-1086", "CS-1084"]).unwrap();
 }
 
 /// Check that the issue fields contain the expected values.
