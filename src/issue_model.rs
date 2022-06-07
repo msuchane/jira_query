@@ -75,7 +75,7 @@ pub struct User {
     #[serde(rename = "displayName")]
     pub display_name: String,
     #[serde(rename = "emailAddress")]
-    pub email_address: String,
+    pub email_address: Option<String>,
     pub key: String,
     pub name: String,
     #[serde(rename = "timeZone")]
