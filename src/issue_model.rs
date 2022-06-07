@@ -1,7 +1,6 @@
 /// This module replicates the fields in a Jira issue as strongly typed structs.
 /// Any extra fields that come from a custom Jira configuration are captured
 /// in the `extra` hash map in the parent struct.
-
 use std::collections::HashMap;
 
 use serde::Deserialize;
