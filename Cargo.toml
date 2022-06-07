@@ -5,6 +5,12 @@ version = "0.1.0"
 edition = "2021"
 license = "Apache-2.0"
 description = "Access tickets on a remote Jira instance."
+readme = "README.md"
+documentation = "https://docs.rs/jira_query/"
+homepage = "https://github.com/msuchane/jira_query"
+repository = "https://github.com/msuchane/jira_query"
+keywords = ["jira", "rest"]
+categories = ["api-bindings"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
