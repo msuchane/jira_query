@@ -33,7 +33,7 @@ pub enum Auth {
 /// * `Default`: Use the default settings of this instance, which sets an arbitrary limit on the number of tickets.
 /// * `MaxResults`: Set the upper limit to this value. Note that each instance has a maximum allowed value,
 /// and if you set `MaxResults` higher than that, the instance uses its own maximum allowed value.
-/// * `Chunks`: Access the tickets in a series of requests, each accessing the number of tickets equal to the chunk size.
+/// * `ChunkSize`: Access the tickets in a series of requests, each accessing the number of tickets equal to the chunk size.
 /// This enables you to access an unlimited number of tickets, as long as the chunk size is smaller
 /// than the maximum allowed results size for the instance.
 #[derive(Default)]
@@ -41,7 +41,7 @@ pub enum Pagination {
     #[default]
     Default,
     MaxResults(u32),
-    Chunks(u32),
+    ChunkSize(u32),
 }
 
 /// This struct temporarily groups together all the parameters to make a REST request.
@@ -64,10 +64,10 @@ impl RestPath<Request<'_>> for JqlResults {
     fn get_path(request: Request) -> Result<String, Error> {
         let max_results = match request.pagination {
             Pagination::Default => String::new(),
-            // For both MaxResults and Chunks, set the maxResults size to the value set in the variant.
-            // The maxResults size is relevant for Chunks in that each chunk requires its own results
+            // For both MaxResults and ChunkSIze, set the maxResults size to the value set in the variant.
+            // The maxResults size is relevant for ChunkSize in that each chunk requires its own results
             // to be at least this large.
-            Pagination::MaxResults(n) | Pagination::Chunks(n) => format!("&maxResults={}", n),
+            Pagination::MaxResults(n) | Pagination::ChunkSize(n) => format!("&maxResults={}", n),
         };
         Ok(format!(
             "{}/search?jql=id%20in%20({}){}",
@@ -110,11 +110,38 @@ impl JiraInstance {
     pub fn issues(&self, keys: &[&str]) -> Result<Vec<Issue>, Error> {
         let client = self.client()?;
 
-        let request = Request {
-            keys,
-            pagination: &self.pagination,
-        };
+        // If Pagination is set to ChunkSize, split the issue keys into chunk by chunk size
+        // and request each chunk separately.
+        if let Pagination::ChunkSize(size) = self.pagination {
+            let mut all_issues = Vec::new();
 
+            for chunk in keys.chunks(size as usize) {
+                let request = Request {
+                    keys: chunk,
+                    pagination: &self.pagination,
+                };
+                let mut chunk_issues = self.issues_as_chunk(&client, request)?;
+                all_issues.append(&mut chunk_issues);
+            }
+
+            Ok(all_issues)
+        // If Pagination is not set to ChunkSize, use a single chunk request for all issues.
+        } else {
+            let request = Request {
+                keys,
+                pagination: &self.pagination,
+            };
+
+            self.issues_as_chunk(&client, request)
+        }
+    }
+
+    /// Process a simple chunk of issues by keys.
+    fn issues_as_chunk(
+        &self,
+        client: &BlockingRestClient,
+        request: Request,
+    ) -> Result<Vec<Issue>, Error> {
         // Gets a bug by ID and deserializes the JSON to data variable
         let data: RestResponse<JqlResults> = client.get(request)?;
         let results = data.into_inner();
