@@ -1,8 +1,6 @@
 /// This module replicates the fields in a Jira issue as strongly typed structs.
 /// Any extra fields that come from a custom Jira configuration are captured
 /// in the `extra` hash map in the parent struct.
-use std::collections::HashMap;
-
 use serde::Deserialize;
 use serde_json::Value;
 
@@ -12,7 +10,7 @@ use serde_json::Value;
 pub struct JqlResults {
     pub issues: Vec<Issue>,
     #[serde(flatten)]
-    pub extra: HashMap<String, Value>,
+    pub extra: Value,
 }
 
 /// A single Jira issue with all its fields.
@@ -25,7 +23,7 @@ pub struct Issue {
     #[serde(rename = "self")]
     pub self_link: String,
     #[serde(flatten)]
-    pub extra: HashMap<String, Value>,
+    pub extra: Value,
 }
 
 /// A container for most fields of a Jira issue.
@@ -70,7 +68,7 @@ pub struct Fields {
     pub parent: Option<CondensedIssue>,
     pub subtasks: Vec<CondensedIssue>,
     #[serde(flatten)]
-    pub extra: HashMap<String, Value>,
+    pub extra: Value,
 }
 
 /// The representation of a Jira user account.
@@ -90,7 +88,7 @@ pub struct User {
     #[serde(rename = "self")]
     pub self_link: String,
     #[serde(flatten)]
-    pub extra: HashMap<String, Value>,
+    pub extra: Value,
 }
 
 /// The representation of a Jira product version.
@@ -106,7 +104,7 @@ pub struct Version {
     #[serde(rename = "self")]
     pub self_link: String,
     #[serde(flatten)]
-    pub extra: HashMap<String, Value>,
+    pub extra: Value,
 }
 
 /// The Jira issue status.
@@ -122,7 +120,7 @@ pub struct Status {
     #[serde(rename = "self")]
     pub self_link: String,
     #[serde(flatten)]
-    pub extra: HashMap<String, Value>,
+    pub extra: Value,
 }
 
 /// The category of a Jira issue status.
@@ -136,7 +134,7 @@ pub struct StatusCategory {
     #[serde(rename = "self")]
     pub self_link: String,
     #[serde(flatten)]
-    pub extra: HashMap<String, Value>,
+    pub extra: Value,
 }
 
 /// The resolution of a Jira issue when it's closed.
@@ -148,7 +146,7 @@ pub struct Resolution {
     #[serde(rename = "self")]
     pub self_link: String,
     #[serde(flatten)]
-    pub extra: HashMap<String, Value>,
+    pub extra: Value,
 }
 
 /// The type of a Jira issue.
@@ -165,7 +163,7 @@ pub struct IssueType {
     #[serde(rename = "self")]
     pub self_link: String,
     #[serde(flatten)]
-    pub extra: HashMap<String, Value>,
+    pub extra: Value,
 }
 
 /// A project namespace that groups Jira issues.
@@ -183,7 +181,7 @@ pub struct Project {
     #[serde(rename = "self")]
     pub self_link: String,
     #[serde(flatten)]
-    pub extra: HashMap<String, Value>,
+    pub extra: Value,
 }
 
 /// The category of a Jira project.
@@ -195,7 +193,7 @@ pub struct ProjectCategory {
     #[serde(rename = "self")]
     pub self_link: String,
     #[serde(flatten)]
-    pub extra: HashMap<String, Value>,
+    pub extra: Value,
 }
 
 /// The priority of a Jira issue.
@@ -208,7 +206,7 @@ pub struct Priority {
     #[serde(rename = "self")]
     pub self_link: String,
     #[serde(flatten)]
-    pub extra: HashMap<String, Value>,
+    pub extra: Value,
 }
 
 /// The component of a Jira issue.
@@ -220,7 +218,7 @@ pub struct Component {
     #[serde(rename = "self")]
     pub self_link: String,
     #[serde(flatten)]
-    pub extra: HashMap<String, Value>,
+    pub extra: Value,
 }
 
 /// Users watching a Jira issue.
@@ -233,7 +231,7 @@ pub struct Watches {
     #[serde(rename = "self")]
     pub self_link: String,
     #[serde(flatten)]
-    pub extra: HashMap<String, Value>,
+    pub extra: Value,
 }
 
 /// The progress of a Jira issue.
@@ -242,7 +240,7 @@ pub struct Progress {
     pub progress: i32,
     pub total: i32,
     #[serde(flatten)]
-    pub extra: HashMap<String, Value>,
+    pub extra: Value,
 }
 
 /// A comment below a Jira issue.
@@ -259,7 +257,7 @@ pub struct Comment {
     #[serde(rename = "self")]
     pub self_link: String,
     #[serde(flatten)]
-    pub extra: HashMap<String, Value>,
+    pub extra: Value,
 }
 
 /// A container for all comments below a Jira issue.
@@ -272,7 +270,7 @@ pub struct Comments {
     pub start_at: i32,
     pub total: i32,
     #[serde(flatten)]
-    pub extra: HashMap<String, Value>,
+    pub extra: Value,
 }
 
 /// A link from one Jira issue to another.
@@ -288,7 +286,7 @@ pub struct IssueLink {
     #[serde(rename = "self")]
     pub self_link: String,
     #[serde(flatten)]
-    pub extra: HashMap<String, Value>,
+    pub extra: Value,
 }
 
 /// A Jira issue linked from another one.
@@ -300,7 +298,7 @@ pub struct LinkedIssue {
     #[serde(rename = "self")]
     pub self_link: String,
     #[serde(flatten)]
-    pub extra: HashMap<String, Value>,
+    pub extra: Value,
 }
 
 /// The reduced fields of a linked Jira issue.
@@ -311,7 +309,7 @@ pub struct LinkedIssueFields {
     pub status: Status,
     pub summary: String,
     #[serde(flatten)]
-    pub extra: HashMap<String, Value>,
+    pub extra: Value,
 }
 
 /// The direction of a link to a Jira issue.
@@ -324,7 +322,7 @@ pub struct IssueLinkType {
     #[serde(rename = "self")]
     pub self_link: String,
     #[serde(flatten)]
-    pub extra: HashMap<String, Value>,
+    pub extra: Value,
 }
 
 /// The votes for a Jira issue.
@@ -336,7 +334,7 @@ pub struct Votes {
     #[serde(rename = "self")]
     pub self_link: String,
     #[serde(flatten)]
-    pub extra: HashMap<String, Value>,
+    pub extra: Value,
 }
 
 /// A Jira avatar in several different sizes:
@@ -356,7 +354,7 @@ pub struct AvatarUrls {
     #[serde(rename = "48x48")]
     pub full: String,
     #[serde(flatten)]
-    pub extra: HashMap<String, Value>,
+    pub extra: Value,
 }
 
 /// A minimal, reduced representation of a Jira issue.
@@ -368,7 +366,7 @@ pub struct CondensedIssue {
     #[serde(rename = "self")]
     pub self_link: String,
     #[serde(flatten)]
-    pub extra: HashMap<String, Value>,
+    pub extra: Value,
 }
 
 /// A minimal, reduced listing of the fields of a Jira issue.
@@ -379,7 +377,7 @@ pub struct CondensedFields {
     pub status: Status,
     pub summary: String,
     #[serde(flatten)]
-    pub extra: HashMap<String, Value>,
+    pub extra: Value,
 }
 
 /// The visibility of a Jira issue.
@@ -388,5 +386,5 @@ pub struct Visibility {
     pub r#type: String,
     pub value: String,
     #[serde(flatten)]
-    pub extra: HashMap<String, Value>,
+    pub extra: Value,
 }
