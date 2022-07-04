@@ -1,3 +1,5 @@
+use std::default::Default;
+
 use jira_query::*;
 
 /// A common convenience function to get anonymous access
@@ -5,7 +7,7 @@ use jira_query::*;
 fn rh_jira() -> JiraInstance {
     JiraInstance {
         host: "https://issues.redhat.com".to_string(),
-        auth: Auth::Anonymous,
+        ..Default::default()
     }
 }
 
@@ -23,7 +25,9 @@ fn access_issue() {
 #[test]
 fn access_issues() {
     let instance = rh_jira();
-    let _issues = instance.issues(&["CS-1086", "CS-1084"]).unwrap();
+    let issues = instance.issues(&["CS-1086", "CS-1084"]).unwrap();
+
+    assert_eq!(issues.len(), 2);
 }
 
 /// Check that the issue fields contain the expected values.
