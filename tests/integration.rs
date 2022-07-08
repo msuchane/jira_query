@@ -1,14 +1,9 @@
-use std::default::Default;
-
 use jira_query::*;
 
 /// A common convenience function to get anonymous access
 /// to the Red Hat Jira instance.
 fn rh_jira() -> JiraInstance {
-    JiraInstance {
-        host: "https://issues.redhat.com".to_string(),
-        ..Default::default()
-    }
+    JiraInstance::at("https://issues.redhat.com".to_string()).unwrap()
 }
 
 /// Try accessing several public issues separately

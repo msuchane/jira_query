@@ -13,11 +13,11 @@ use crate::issue_model::{Issue, JqlResults};
 const REST_PREFIX: &str = "rest/api/2";
 
 /// Configuration and credentials to access a Jira instance.
-#[derive(Default)]
 pub struct JiraInstance {
     pub host: String,
     pub auth: Auth,
     pub pagination: Pagination,
+    client: BlockingRestClient,
 }
 
 /// The authentication method used to contact Jira.
@@ -58,7 +58,6 @@ impl RestPath<&str> for Issue {
     }
 }
 
-// TODO: Make this generic over &[&str] and &[String].
 /// API call with several &str parameters representing the IDs of issues.
 impl RestPath<Request<'_>> for JqlResults {
     fn get_path(request: Request) -> Result<String, Error> {
@@ -79,16 +78,38 @@ impl RestPath<Request<'_>> for JqlResults {
 }
 
 impl JiraInstance {
-    /// Build a client that connects to Jira.
-    /// This is a separate function so that both `issue` and `issues` can reuse it.
-    fn client(&self) -> Result<BlockingRestClient, Error> {
-        let mut client = RestClient::builder().blocking(&self.host)?;
+    /// Create a new `BzInstance` struct using a host URL, with default values
+    /// for all options.
+    pub fn at(host: String) -> Result<Self, Error> {
+        // TODO: This function takes host as a String, even though client is happy with &str.
+        // The String is only used in the host struct attribute.
+        let client = RestClient::builder().blocking(&host)?;
 
-        if let Auth::ApiKey(api_key) = &self.auth {
-            client.set_header("Authorization", &format!("Bearer {}", api_key))?;
+        Ok(JiraInstance {
+            host,
+            client,
+            auth: Auth::default(),
+            pagination: Pagination::default(),
+        })
+    }
+
+    /// Set the authentication method of this `JiraInstance`.
+    pub fn authenticate(mut self, auth: Auth) -> Result<Self, Error> {
+        self.auth = auth;
+        // If the user selects the API key authorization, set the API key in the request header.
+        // Otherwise, the anonymous authorization doesn't modify the request in any way.
+        if let Auth::ApiKey(key) = &self.auth {
+            self.client
+                .set_header("Authorization", &format!("Bearer {}", key))?;
         }
+        Ok(self)
+    }
 
-        Ok(client)
+    /// Set the pagination method of this `JiraInstance`.
+    #[must_use]
+    pub fn paginate(mut self, pagination: Pagination) -> Self {
+        self.pagination = pagination;
+        self
     }
 
     // This method uses a separate implementation from `issues` because Jira provides a way
@@ -96,10 +117,8 @@ impl JiraInstance {
     // where no tickets might match, or more than one might.
     /// Access a single issue by its key.
     pub fn issue(&self, key: &str) -> Result<Issue, Error> {
-        let client = self.client()?;
-
         // Gets a bug by ID and deserializes the JSON to data variable
-        let data: RestResponse<Issue> = client.get(key)?;
+        let data: RestResponse<Issue> = self.client.get(key)?;
         let issue = data.into_inner();
         debug!("{:#?}", issue);
 
@@ -108,8 +127,6 @@ impl JiraInstance {
 
     /// Access several issues by their keys.
     pub fn issues(&self, keys: &[&str]) -> Result<Vec<Issue>, Error> {
-        let client = self.client()?;
-
         // If Pagination is set to ChunkSize, split the issue keys into chunk by chunk size
         // and request each chunk separately.
         if let Pagination::ChunkSize(size) = self.pagination {
@@ -120,7 +137,7 @@ impl JiraInstance {
                     keys: chunk,
                     pagination: &self.pagination,
                 };
-                let mut chunk_issues = self.issues_as_chunk(&client, request)?;
+                let mut chunk_issues = self.issues_as_chunk(request)?;
                 all_issues.append(&mut chunk_issues);
             }
 
@@ -132,18 +149,14 @@ impl JiraInstance {
                 pagination: &self.pagination,
             };
 
-            self.issues_as_chunk(&client, request)
+            self.issues_as_chunk(request)
         }
     }
 
     /// Process a simple chunk of issues by keys.
-    fn issues_as_chunk(
-        &self,
-        client: &BlockingRestClient,
-        request: Request,
-    ) -> Result<Vec<Issue>, Error> {
+    fn issues_as_chunk(&self, request: Request) -> Result<Vec<Issue>, Error> {
         // Gets a bug by ID and deserializes the JSON to data variable
-        let data: RestResponse<JqlResults> = client.get(request)?;
+        let data: RestResponse<JqlResults> = self.client.get(request)?;
         let results = data.into_inner();
         debug!("{:#?}", results);
 
