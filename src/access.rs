@@ -2,7 +2,6 @@
 // * https://docs.atlassian.com/software/jira/docs/api/REST/latest/
 // * https://docs.atlassian.com/jira-software/REST/latest/
 
-use log::debug;
 use restson::blocking::RestClient as BlockingRestClient;
 use restson::{Error, Response as RestResponse, RestClient, RestPath};
 
@@ -120,7 +119,7 @@ impl JiraInstance {
         // Gets a bug by ID and deserializes the JSON to data variable
         let data: RestResponse<Issue> = self.client.get(key)?;
         let issue = data.into_inner();
-        debug!("{:#?}", issue);
+        log::debug!("{:#?}", issue);
 
         Ok(issue)
     }
@@ -158,7 +157,7 @@ impl JiraInstance {
         // Gets a bug by ID and deserializes the JSON to data variable
         let data: RestResponse<JqlResults> = self.client.get(request)?;
         let results = data.into_inner();
-        debug!("{:#?}", results);
+        log::debug!("{:#?}", results);
 
         // TODO: Note that the resulting list might be empty and still Ok
         Ok(results.issues)
