@@ -17,7 +17,9 @@ categories = ["api-bindings"]
 [dependencies]
 log = "0.4"
 thiserror = "1.0"
-restson = "1.2"
+# Disable the optional blocking client in restson because we don't use it.
+restson = { version = "1.2", default-features = false, features = ["lib-serde-json"] }
 serde = "^1.0"
 serde_derive = "^1.0"
 serde_json = "1.0"
+tokio = { version = "^1", features = ["full"] }

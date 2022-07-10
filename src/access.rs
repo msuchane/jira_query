@@ -2,7 +2,6 @@
 // * https://docs.atlassian.com/software/jira/docs/api/REST/latest/
 // * https://docs.atlassian.com/jira-software/REST/latest/
 
-use restson::blocking::RestClient as BlockingRestClient;
 use restson::{RestClient, RestPath};
 
 use crate::errors::JiraQueryError;
@@ -17,7 +16,7 @@ pub struct JiraInstance {
     pub host: String,
     pub auth: Auth,
     pub pagination: Pagination,
-    client: BlockingRestClient,
+    client: RestClient,
 }
 
 /// The authentication method used to contact Jira.
@@ -83,7 +82,7 @@ impl JiraInstance {
     pub fn at(host: String) -> Result<Self, JiraQueryError> {
         // TODO: This function takes host as a String, even though client is happy with &str.
         // The String is only used in the host struct attribute.
-        let client = RestClient::builder().blocking(&host)?;
+        let client = RestClient::new(&host)?;
 
         Ok(JiraInstance {
             host,
@@ -116,9 +115,9 @@ impl JiraInstance {
     // to request a single ticket specifically. That conveniently handles error cases
     // where no tickets might match, or more than one might.
     /// Access a single issue by its key.
-    pub fn issue(&self, key: &str) -> Result<Issue, JiraQueryError> {
+    pub async fn issue(&self, key: &str) -> Result<Issue, JiraQueryError> {
         // Gets a bug by ID and deserializes the JSON to data variable
-        let data: restson::Response<Issue> = self.client.get(key)?;
+        let data: restson::Response<Issue> = self.client.get(key).await?;
         let issue = data.into_inner();
         log::debug!("{:#?}", issue);
 
@@ -126,7 +125,7 @@ impl JiraInstance {
     }
 
     /// Access several issues by their keys.
-    pub fn issues(&self, keys: &[&str]) -> Result<Vec<Issue>, JiraQueryError> {
+    pub async fn issues(&self, keys: &[&str]) -> Result<Vec<Issue>, JiraQueryError> {
         // If Pagination is set to ChunkSize, split the issue keys into chunk by chunk size
         // and request each chunk separately.
         if let Pagination::ChunkSize(size) = self.pagination {
@@ -137,7 +136,7 @@ impl JiraInstance {
                     keys: chunk,
                     pagination: &self.pagination,
                 };
-                let mut chunk_issues = self.issues_as_chunk(request)?;
+                let mut chunk_issues = self.issues_as_chunk(request).await?;
                 all_issues.append(&mut chunk_issues);
             }
 
@@ -149,14 +148,14 @@ impl JiraInstance {
                 pagination: &self.pagination,
             };
 
-            self.issues_as_chunk(request)
+            self.issues_as_chunk(request).await
         }
     }
 
     /// Process a simple chunk of issues by keys.
-    fn issues_as_chunk(&self, request: Request) -> Result<Vec<Issue>, JiraQueryError> {
+    async fn issues_as_chunk(&self, request: Request<'_>) -> Result<Vec<Issue>, JiraQueryError> {
         // Gets a bug by ID and deserializes the JSON to data variable
-        let data: restson::Response<JqlResults> = self.client.get(request)?;
+        let data: restson::Response<JqlResults> = self.client.get(request).await?;
         let results = data.into_inner();
         log::debug!("{:#?}", results);
 
