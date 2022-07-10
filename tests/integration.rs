@@ -25,6 +25,18 @@ fn access_issues() {
     assert_eq!(issues.len(), 2);
 }
 
+/// Try accessing several public issues at once
+/// to test the client and the deserialization.
+#[test]
+fn access_missing_issue() {
+    let instance = rh_jira();
+    let issues = instance.issues(&["CS-11111111111111111111"]);
+
+    assert!(issues.is_err());
+    // TODO: This case should actually match JiraQueryError::NoIssues, not JiraQueryError::Rest. Fix it.
+    assert!(matches!(issues.unwrap_err(), JiraQueryError::Rest(_)));
+}
+
 /// Check that the issue fields contain the expected values.
 /// Work with fields that are standard in Jira, rather than custom extensions.
 #[test]

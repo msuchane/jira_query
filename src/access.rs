@@ -160,8 +160,14 @@ impl JiraInstance {
         let results = data.into_inner();
         log::debug!("{:#?}", results);
 
-        // TODO: Note that the resulting list might be empty and still Ok
-        Ok(results.issues)
+        // If the resulting list is empty, return an error.
+        // TODO: The REST parsing above already results in an error if the results are empty.
+        // Try to catch the error there.
+        if results.issues.is_empty() {
+            Err(JiraQueryError::NoIssues)
+        } else {
+            Ok(results.issues)
+        }
     }
 }
 
