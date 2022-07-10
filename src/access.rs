@@ -3,8 +3,9 @@
 // * https://docs.atlassian.com/jira-software/REST/latest/
 
 use restson::blocking::RestClient as BlockingRestClient;
-use restson::{Error, Response as RestResponse, RestClient, RestPath};
+use restson::{RestClient, RestPath};
 
+use crate::errors::JiraQueryError;
 use crate::issue_model::{Issue, JqlResults};
 
 // The prefix of every subsequent REST request.
@@ -52,14 +53,14 @@ struct Request<'a> {
 
 /// API call with one &str parameter
 impl RestPath<&str> for Issue {
-    fn get_path(param: &str) -> Result<String, Error> {
+    fn get_path(param: &str) -> Result<String, restson::Error> {
         Ok(format!("{}/issue/{}", REST_PREFIX, param))
     }
 }
 
 /// API call with several &str parameters representing the IDs of issues.
 impl RestPath<Request<'_>> for JqlResults {
-    fn get_path(request: Request) -> Result<String, Error> {
+    fn get_path(request: Request) -> Result<String, restson::Error> {
         let max_results = match request.pagination {
             Pagination::Default => String::new(),
             // For both MaxResults and ChunkSIze, set the maxResults size to the value set in the variant.
@@ -79,7 +80,7 @@ impl RestPath<Request<'_>> for JqlResults {
 impl JiraInstance {
     /// Create a new `BzInstance` struct using a host URL, with default values
     /// for all options.
-    pub fn at(host: String) -> Result<Self, Error> {
+    pub fn at(host: String) -> Result<Self, JiraQueryError> {
         // TODO: This function takes host as a String, even though client is happy with &str.
         // The String is only used in the host struct attribute.
         let client = RestClient::builder().blocking(&host)?;
@@ -93,7 +94,7 @@ impl JiraInstance {
     }
 
     /// Set the authentication method of this `JiraInstance`.
-    pub fn authenticate(mut self, auth: Auth) -> Result<Self, Error> {
+    pub fn authenticate(mut self, auth: Auth) -> Result<Self, JiraQueryError> {
         self.auth = auth;
         // If the user selects the API key authorization, set the API key in the request header.
         // Otherwise, the anonymous authorization doesn't modify the request in any way.
@@ -115,9 +116,9 @@ impl JiraInstance {
     // to request a single ticket specifically. That conveniently handles error cases
     // where no tickets might match, or more than one might.
     /// Access a single issue by its key.
-    pub fn issue(&self, key: &str) -> Result<Issue, Error> {
+    pub fn issue(&self, key: &str) -> Result<Issue, JiraQueryError> {
         // Gets a bug by ID and deserializes the JSON to data variable
-        let data: RestResponse<Issue> = self.client.get(key)?;
+        let data: restson::Response<Issue> = self.client.get(key)?;
         let issue = data.into_inner();
         log::debug!("{:#?}", issue);
 
@@ -125,7 +126,7 @@ impl JiraInstance {
     }
 
     /// Access several issues by their keys.
-    pub fn issues(&self, keys: &[&str]) -> Result<Vec<Issue>, Error> {
+    pub fn issues(&self, keys: &[&str]) -> Result<Vec<Issue>, JiraQueryError> {
         // If Pagination is set to ChunkSize, split the issue keys into chunk by chunk size
         // and request each chunk separately.
         if let Pagination::ChunkSize(size) = self.pagination {
@@ -153,9 +154,9 @@ impl JiraInstance {
     }
 
     /// Process a simple chunk of issues by keys.
-    fn issues_as_chunk(&self, request: Request) -> Result<Vec<Issue>, Error> {
+    fn issues_as_chunk(&self, request: Request) -> Result<Vec<Issue>, JiraQueryError> {
         // Gets a bug by ID and deserializes the JSON to data variable
-        let data: RestResponse<JqlResults> = self.client.get(request)?;
+        let data: restson::Response<JqlResults> = self.client.get(request)?;
         let results = data.into_inner();
         log::debug!("{:#?}", results);
 
