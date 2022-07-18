@@ -1,4 +1,4 @@
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, NaiveDate, Utc};
 /// This module replicates the fields in a Jira issue as strongly typed structs.
 /// Any extra fields that come from a custom Jira configuration are captured
 /// in the `extra` hash map in the parent struct.
@@ -100,8 +100,9 @@ pub struct Version {
     pub name: String,
     pub archived: bool,
     pub released: bool,
+    /// Jira stores `releaseDate` only as `YYYY-MM-DD`, so it can't deserialize to full `DateTime`.
     #[serde(rename = "releaseDate")]
-    pub release_date: Option<DateTime<Utc>>,
+    pub release_date: Option<NaiveDate>,
     #[serde(rename = "self")]
     pub self_link: String,
     #[serde(flatten)]
