@@ -1,4 +1,5 @@
 use tokio;
+use chrono::prelude::*;
 
 use jira_query::*;
 
@@ -58,4 +59,15 @@ async fn check_standard_fields() {
     assert_eq!(issue.fields.project.key, "CS");
     assert_eq!(issue.fields.project.name, "CentOS Stream");
     assert_eq!(issue.fields.priority.name, "Normal");
+}
+
+/// Check that the issue was created at the expected date, and that time deserialization
+/// works as expected.
+#[tokio::test]
+async fn check_time() {
+    let instance = rh_jira();
+    let issue = instance.issue("CS-1113").await.unwrap();
+
+    let date_created = chrono::Utc.ymd(2022, 5, 24);
+    assert_eq!(issue.fields.created.date(), date_created);
 }

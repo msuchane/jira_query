@@ -3,6 +3,7 @@
 /// in the `extra` hash map in the parent struct.
 use serde::Deserialize;
 use serde_json::Value;
+use chrono::{DateTime, Utc};
 
 /// The response from Jira to a JQL query,
 /// which includes the list of requested issues and additional metadata.
@@ -30,18 +31,18 @@ pub struct Issue {
 #[derive(Clone, Debug, Deserialize)]
 pub struct Fields {
     #[serde(rename = "lastViewed")]
-    pub last_viewed: Option<String>,
+    pub last_viewed: Option<DateTime<Utc>>,
     pub labels: Vec<String>,
     pub versions: Vec<Version>,
     pub assignee: User,
     pub description: Option<String>,
-    pub duedate: Option<String>,
+    pub duedate: Option<DateTime<Utc>>,
     #[serde(rename = "fixVersions")]
     pub fix_versions: Vec<Version>,
     pub reporter: User,
     pub status: Status,
-    pub created: String,
-    pub updated: String,
+    pub created: DateTime<Utc>,
+    pub updated: DateTime<Utc>,
     pub issuetype: IssueType,
     pub timeestimate: Option<i32>,
     pub aggregatetimeestimate: Option<i32>,
@@ -58,10 +59,10 @@ pub struct Fields {
     pub priority: Priority,
     pub components: Vec<Component>,
     pub watches: Watches,
-    pub archiveddate: Option<String>,
-    pub archivedby: Option<String>,
+    pub archiveddate: Option<DateTime<Utc>>,
+    pub archivedby: Option<DateTime<Utc>>,
     pub resolution: Option<Resolution>,
-    pub resolutiondate: Option<String>,
+    pub resolutiondate: Option<DateTime<Utc>>,
     pub comment: Option<Comments>,
     pub issuelinks: Vec<IssueLink>,
     pub votes: Votes,
@@ -100,7 +101,7 @@ pub struct Version {
     pub archived: bool,
     pub released: bool,
     #[serde(rename = "releaseDate")]
-    pub release_date: Option<String>,
+    pub release_date: Option<DateTime<Utc>>,
     #[serde(rename = "self")]
     pub self_link: String,
     #[serde(flatten)]
@@ -248,11 +249,11 @@ pub struct Progress {
 pub struct Comment {
     pub author: User,
     pub body: String,
-    pub created: String,
+    pub created: DateTime<Utc>,
     pub id: String,
     #[serde(rename = "updateAuthor")]
     pub update_author: User,
-    pub updated: String,
+    pub updated: DateTime<Utc>,
     pub visibility: Option<Visibility>,
     #[serde(rename = "self")]
     pub self_link: String,
