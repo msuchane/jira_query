@@ -1,5 +1,5 @@
-use tokio;
 use chrono::prelude::*;
+use tokio;
 
 use jira_query::*;
 

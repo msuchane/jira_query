@@ -1,9 +1,9 @@
+use chrono::{DateTime, Utc};
 /// This module replicates the fields in a Jira issue as strongly typed structs.
 /// Any extra fields that come from a custom Jira configuration are captured
 /// in the `extra` hash map in the parent struct.
 use serde::Deserialize;
 use serde_json::Value;
-use chrono::{DateTime, Utc};
 
 /// The response from Jira to a JQL query,
 /// which includes the list of requested issues and additional metadata.

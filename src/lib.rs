@@ -10,3 +10,5 @@ pub use issue_model::{
     Project, ProjectCategory, Resolution, Status, StatusCategory, User, Version, Visibility, Votes,
     Watches,
 };
+// Re-export JSON Value because it's an integral part of the issue model.
+pub use serde_json::Value;
