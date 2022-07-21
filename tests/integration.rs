@@ -71,3 +71,11 @@ async fn check_time() {
     let date_created = chrono::Utc.ymd(2022, 5, 24);
     assert_eq!(issue.fields.created.date(), date_created);
 }
+
+/// Try accessing issues that match a JQL search.
+#[tokio::test]
+async fn search_for_issues() {
+    let instance = rh_jira();
+    let query = r#"project="CentOS Stream" AND priority = High"#;
+    let _issues = instance.search(query).await.unwrap();
+}

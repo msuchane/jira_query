@@ -46,8 +46,24 @@ pub enum Pagination {
 /// This struct temporarily groups together all the parameters to make a REST request.
 /// It exists here because `RestPath` is only generic over a single parameter.
 struct Request<'a> {
-    keys: &'a [&'a str],
+    method: Method<'a>,
     pagination: &'a Pagination,
+}
+
+/// The method of the request to Jira. Either request specific IDs,
+/// or use a free-form JQL search query.
+enum Method<'a> {
+    Keys(&'a [&'a str]),
+    Search(&'a str),
+}
+
+impl<'a> Method<'a> {
+    fn url_fragment(self) -> String {
+        match self {
+            Self::Keys(ids) => format!("id%20in%20({})", ids.join(",")),
+            Self::Search(query) => query.to_string(),
+        }
+    }
 }
 
 /// API call with one &str parameter
@@ -68,9 +84,9 @@ impl RestPath<Request<'_>> for JqlResults {
             Pagination::MaxResults(n) | Pagination::ChunkSize(n) => format!("&maxResults={}", n),
         };
         Ok(format!(
-            "{}/search?jql=id%20in%20({}){}",
+            "{}/search?jql={}{}",
             REST_PREFIX,
-            request.keys.join(","),
+            request.method.url_fragment(),
             max_results,
         ))
     }
@@ -116,7 +132,7 @@ impl JiraInstance {
     // where no tickets might match, or more than one might.
     /// Access a single issue by its key.
     pub async fn issue(&self, key: &str) -> Result<Issue, JiraQueryError> {
-        // Gets a bug by ID and deserializes the JSON to data variable
+        // Gets an issue by ID and deserializes the JSON to data variable
         let data: restson::Response<Issue> = self.client.get(key).await?;
         let issue = data.into_inner();
         log::debug!("{:#?}", issue);
@@ -133,7 +149,7 @@ impl JiraInstance {
 
             for chunk in keys.chunks(size as usize) {
                 let request = Request {
-                    keys: chunk,
+                    method: Method::Keys(chunk),
                     pagination: &self.pagination,
                 };
                 let mut chunk_issues = self.issues_as_chunk(request).await?;
@@ -144,7 +160,7 @@ impl JiraInstance {
         // If Pagination is not set to ChunkSize, use a single chunk request for all issues.
         } else {
             let request = Request {
-                keys,
+                method: Method::Keys(keys),
                 pagination: &self.pagination,
             };
 
@@ -154,7 +170,29 @@ impl JiraInstance {
 
     /// Process a simple chunk of issues by keys.
     async fn issues_as_chunk(&self, request: Request<'_>) -> Result<Vec<Issue>, JiraQueryError> {
-        // Gets a bug by ID and deserializes the JSON to data variable
+        let data: restson::Response<JqlResults> = self.client.get(request).await?;
+        let results = data.into_inner();
+        log::debug!("{:#?}", results);
+
+        // If the resulting list is empty, return an error.
+        // TODO: The REST parsing above already results in an error if the results are empty.
+        // Try to catch the error there.
+        if results.issues.is_empty() {
+            Err(JiraQueryError::NoIssues)
+        } else {
+            Ok(results.issues)
+        }
+    }
+
+    /// Access issues using a free-form JQL search.
+    ///
+    /// An example of a query: `project="CentOS Stream" AND priority = High`.
+    pub async fn search(&self, query: &str) -> Result<Vec<Issue>, JiraQueryError> {
+        let request = Request {
+            method: Method::Search(query),
+            pagination: &self.pagination,
+        };
+
         let data: restson::Response<JqlResults> = self.client.get(request).await?;
         let results = data.into_inner();
         log::debug!("{:#?}", results);
