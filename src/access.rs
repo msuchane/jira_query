@@ -200,6 +200,8 @@ impl JiraInstance {
     /// Access issues using a free-form JQL search.
     ///
     /// An example of a query: `project="CentOS Stream" AND priority = High`.
+    ///
+    /// The maximum number of results is currently limited to the page size set in the Jira instance.
     pub async fn search(&self, query: &str) -> Result<Vec<Issue>, JiraQueryError> {
         let request = Request {
             method: Method::Search(query),

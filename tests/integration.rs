@@ -53,7 +53,7 @@ async fn check_standard_fields() {
         issue.fields.summary,
         "Set gitlab.com/redhat/centos-stream/tests to public"
     );
-    assert_eq!(issue.fields.assignee.display_name, "aoife moloney");
+    assert_eq!(issue.fields.assignee.unwrap().display_name, "aoife moloney");
     assert_eq!(issue.fields.reporter.display_name, "Don Zickus");
     assert_eq!(issue.fields.issuetype.name, "Task");
     assert_eq!(issue.fields.project.key, "CS");
