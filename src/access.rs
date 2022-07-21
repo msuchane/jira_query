@@ -154,7 +154,16 @@ impl JiraInstance {
     }
 
     /// Access several issues by their keys.
+    /// 
+    /// If the list of keys is empty, returns an empty list back with no errors.
     pub async fn issues(&self, keys: &[&str]) -> Result<Vec<Issue>, JiraQueryError> {
+        // If the user specifies no keys, skip network requests and return no bugs.
+        // Returning an error could also be valid, but I believe that this behavior
+        // is less surprising and more practical.
+        if keys.is_empty() {
+            return Ok(Vec::new());
+        }
+
         // If Pagination is set to ChunkSize, split the issue keys into chunk by chunk size
         // and request each chunk separately.
         if let Pagination::ChunkSize(size) = self.pagination {

@@ -79,3 +79,12 @@ async fn search_for_issues() {
     let query = r#"project="CentOS Stream" AND priority = High"#;
     let _issues = instance.search(query).await.unwrap();
 }
+
+/// Make sure that no IDs on the input result in no bugs, without errors.
+#[tokio::test]
+async fn check_no_issues() {
+    let instance = rh_jira();
+    let issues = instance.issues(&[]).await;
+
+    assert_eq!(issues.ok(), Some(vec![]));
+}
