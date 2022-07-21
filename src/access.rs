@@ -44,6 +44,7 @@ pub enum Pagination {
     #[default]
     Default,
     MaxResults(u32),
+    // TODO: The chunk size doesn't apply to the search method. Implement it there as well.
     ChunkSize(u32),
 }
 
