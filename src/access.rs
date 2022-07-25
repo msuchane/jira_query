@@ -44,7 +44,6 @@ pub enum Pagination {
     #[default]
     Default,
     MaxResults(u32),
-    // TODO: The chunk size doesn't apply to the search method. Implement it there as well.
     ChunkSize(u32),
 }
 
@@ -53,6 +52,7 @@ pub enum Pagination {
 struct Request<'a> {
     method: Method<'a>,
     pagination: &'a Pagination,
+    start_at: u32,
 }
 
 /// The method of the request to Jira. Either request specific IDs,
@@ -63,10 +63,10 @@ enum Method<'a> {
 }
 
 impl<'a> Method<'a> {
-    fn url_fragment(self) -> String {
+    fn url_fragment(&self) -> String {
         match self {
             Self::Keys(ids) => format!("id%20in%20({})", ids.join(",")),
-            Self::Search(query) => query.to_string(),
+            Self::Search(query) => (*query).to_string(),
         }
     }
 }
@@ -79,8 +79,8 @@ impl RestPath<&str> for Issue {
 }
 
 /// API call with several &str parameters representing the IDs of issues.
-impl RestPath<Request<'_>> for JqlResults {
-    fn get_path(request: Request) -> Result<String, restson::Error> {
+impl RestPath<&Request<'_>> for JqlResults {
+    fn get_path(request: &Request) -> Result<String, restson::Error> {
         let max_results = match request.pagination {
             Pagination::Default => String::new(),
             // For both MaxResults and ChunkSIze, set the maxResults size to the value set in the variant.
@@ -88,11 +88,13 @@ impl RestPath<Request<'_>> for JqlResults {
             // to be at least this large.
             Pagination::MaxResults(n) | Pagination::ChunkSize(n) => format!("&maxResults={}", n),
         };
+        let start_at = format!("&startAt={}", request.start_at);
         Ok(format!(
-            "{}/search?jql={}{}",
+            "{}/search?jql={}{}{}",
             REST_PREFIX,
             request.method.url_fragment(),
             max_results,
+            start_at,
         ))
     }
 }
@@ -154,7 +156,7 @@ impl JiraInstance {
     }
 
     /// Access several issues by their keys.
-    /// 
+    ///
     /// If the list of keys is empty, returns an empty list back with no errors.
     pub async fn issues(&self, keys: &[&str]) -> Result<Vec<Issue>, JiraQueryError> {
         // If the user specifies no keys, skip network requests and return no bugs.
@@ -164,70 +166,92 @@ impl JiraInstance {
             return Ok(Vec::new());
         }
 
+        // The initial request, common to all pagination methods.
+        let mut request = Request {
+            method: Method::Keys(keys),
+            pagination: &self.pagination,
+            start_at: 0,
+        };
+
         // If Pagination is set to ChunkSize, split the issue keys into chunk by chunk size
         // and request each chunk separately.
         if let Pagination::ChunkSize(size) = self.pagination {
             let mut all_issues = Vec::new();
 
-            for chunk in keys.chunks(size as usize) {
-                let request = Request {
-                    method: Method::Keys(chunk),
-                    pagination: &self.pagination,
-                };
-                let mut chunk_issues = self.issues_as_chunk(request).await?;
+            loop {
+                let mut chunk_issues = self.chunk_of_issues(&request).await?;
+
+                // End the loop if no more issues are coming on the this page.
+                if chunk_issues.is_empty() {
+                    break;
+                }
+
                 all_issues.append(&mut chunk_issues);
+
+                request.start_at += size;
             }
 
             Ok(all_issues)
         // If Pagination is not set to ChunkSize, use a single chunk request for all issues.
         } else {
-            let request = Request {
-                method: Method::Keys(keys),
-                pagination: &self.pagination,
-            };
+            let issues = self.chunk_of_issues(&request).await?;
 
-            self.issues_as_chunk(request).await
+            // If the resulting list is empty, return an error.
+            // TODO: The REST parsing above already results in an error if the results are empty.
+            // Try to catch the error there.
+            if issues.is_empty() {
+                Err(JiraQueryError::NoIssues)
+            } else {
+                Ok(issues)
+            }
         }
     }
 
-    /// Process a simple chunk of issues by keys.
-    async fn issues_as_chunk(&self, request: Request<'_>) -> Result<Vec<Issue>, JiraQueryError> {
+    /// Download a specific list (chunk) of issues.
+    /// Reused elsewhere as a building block of different pagination methods.
+    async fn chunk_of_issues(&self, request: &Request<'_>) -> Result<Vec<Issue>, JiraQueryError> {
         let data: restson::Response<JqlResults> = self.client.get(request).await?;
         let results = data.into_inner();
         log::debug!("{:#?}", results);
 
-        // If the resulting list is empty, return an error.
-        // TODO: The REST parsing above already results in an error if the results are empty.
-        // Try to catch the error there.
-        if results.issues.is_empty() {
-            Err(JiraQueryError::NoIssues)
-        } else {
-            Ok(results.issues)
-        }
+        Ok(results.issues)
     }
 
     /// Access issues using a free-form JQL search.
     ///
     /// An example of a query: `project="CentOS Stream" AND priority = High`.
-    ///
-    /// The maximum number of results is currently limited to the page size set in the Jira instance.
     pub async fn search(&self, query: &str) -> Result<Vec<Issue>, JiraQueryError> {
-        let request = Request {
+        // The initial request, common to all pagination methods.
+        let mut request = Request {
             method: Method::Search(query),
             pagination: &self.pagination,
+            start_at: 0,
         };
 
-        let data: restson::Response<JqlResults> = self.client.get(request).await?;
-        let results = data.into_inner();
-        log::debug!("{:#?}", results);
+        // If Pagination is set to ChunkSize, split the issue keys into chunk by chunk size
+        // and request each chunk separately.
+        if let Pagination::ChunkSize(size) = self.pagination {
+            let mut all_issues = Vec::new();
 
-        // If the resulting list is empty, return an error.
-        // TODO: The REST parsing above already results in an error if the results are empty.
-        // Try to catch the error there.
-        if results.issues.is_empty() {
-            Err(JiraQueryError::NoIssues)
+            loop {
+                let mut chunk_issues = self.chunk_of_issues(&request).await?;
+
+                // End the loop if no more issues are coming on the this page.
+                if chunk_issues.is_empty() {
+                    break;
+                }
+
+                all_issues.append(&mut chunk_issues);
+
+                request.start_at += size;
+            }
+
+            Ok(all_issues)
+        // If Pagination is not set to ChunkSize, use a single chunk request for all issues.
         } else {
-            Ok(results.issues)
+            let issues = self.chunk_of_issues(&request).await?;
+
+            Ok(issues)
         }
     }
 }

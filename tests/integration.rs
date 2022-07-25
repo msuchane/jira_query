@@ -88,3 +88,14 @@ async fn check_no_issues() {
 
     assert_eq!(issues.ok(), Some(vec![]));
 }
+
+/// Try accessing issues that match a JQL search.
+/// Check that their number isn't limited by a page size.
+#[tokio::test]
+async fn search_for_issues_start_at() {
+    let instance = rh_jira().paginate(Pagination::ChunkSize(30));
+    let query = r#"project="CentOS Stream""#;
+    let issues = instance.search(query).await.unwrap();
+    // The query should result in hundreds of issues.
+    assert!(issues.len() > 50);
+}
