@@ -36,7 +36,7 @@ pub struct Fields {
     pub versions: Vec<Version>,
     pub assignee: Option<User>,
     pub description: Option<String>,
-    pub duedate: Option<DateTime<Utc>>,
+    pub duedate: Option<NaiveDate>,
     #[serde(rename = "fixVersions")]
     pub fix_versions: Vec<Version>,
     pub reporter: User,
