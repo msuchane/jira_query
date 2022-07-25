@@ -107,7 +107,7 @@ impl JiraInstance {
         // The String is only used in the host struct attribute.
         let client = RestClient::new(&host)?;
 
-        Ok(JiraInstance {
+        Ok(Self {
             host,
             client,
             auth: Auth::default(),
@@ -137,7 +137,7 @@ impl JiraInstance {
 
     /// Set the pagination method of this `JiraInstance`.
     #[must_use]
-    pub fn paginate(mut self, pagination: Pagination) -> Self {
+    pub const fn paginate(mut self, pagination: Pagination) -> Self {
         self.pagination = pagination;
         self
     }
