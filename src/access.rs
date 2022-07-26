@@ -197,6 +197,9 @@ impl JiraInstance {
     /// The request controls whether the download works with IDs or JQL.
     /// This function only processes the resulting pages coming back from Jira
     /// and stops the iteration at the last page.
+    ///
+    /// See the Jira documentation:
+    /// <https://confluence.atlassian.com/jirakb/changing-maxresults-parameter-for-jira-rest-api-779160706.html>.
     async fn paginated_issues(
         &self,
         mut request: Request<'_>,
