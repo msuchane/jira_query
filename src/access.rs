@@ -167,7 +167,7 @@ impl JiraInstance {
         }
 
         // The initial request, common to all pagination methods.
-        let mut request = Request {
+        let request = Request {
             method: Method::Keys(keys),
             pagination: &self.pagination,
             start_at: 0,
@@ -176,24 +176,8 @@ impl JiraInstance {
         // If Pagination is set to ChunkSize, split the issue keys into chunk by chunk size
         // and request each chunk separately.
         if let Pagination::ChunkSize(chunk_size) = self.pagination {
-            let mut all_issues = Vec::new();
-
-            loop {
-                let mut chunk_issues = self.chunk_of_issues(&request).await?;
-                // Calculate the length now before the content moves to `all_issues`.
-                let page_size = chunk_issues.len();
-                all_issues.append(&mut chunk_issues);
-
-                // If this page contains fewer issues than the chunk size,
-                // it's the last page. Stop the loop.
-                if page_size < chunk_size as usize {
-                    break;
-                }
-
-                request.start_at += chunk_size;
-            }
-
-            Ok(all_issues)
+            let paginated_issues = self.paginated_issues(request, chunk_size).await;
+            paginated_issues
         // If Pagination is not set to ChunkSize, use a single chunk request for all issues.
         } else {
             let issues = self.chunk_of_issues(&request).await?;
@@ -207,6 +191,35 @@ impl JiraInstance {
                 Ok(issues)
             }
         }
+    }
+
+    /// Download all issues specified in the request as a series of chunks or pages.
+    /// The request controls whether the download works with IDs or JQL.
+    /// This function only processes the resulting pages coming back from Jira
+    /// and stops the iteration at the last page.
+    async fn paginated_issues(
+        &self,
+        mut request: Request<'_>,
+        chunk_size: u32,
+    ) -> Result<Vec<Issue>, JiraQueryError> {
+        let mut all_issues = Vec::new();
+
+        loop {
+            let mut chunk_issues = self.chunk_of_issues(&request).await?;
+            // Calculate the length now before the content moves to `all_issues`.
+            let page_size = chunk_issues.len();
+            all_issues.append(&mut chunk_issues);
+
+            // If this page contains fewer issues than the chunk size,
+            // it's the last page. Stop the loop.
+            if page_size < chunk_size as usize {
+                break;
+            }
+
+            request.start_at += chunk_size;
+        }
+
+        Ok(all_issues)
     }
 
     /// Download a specific list (chunk) of issues.
@@ -224,7 +237,7 @@ impl JiraInstance {
     /// An example of a query: `project="CentOS Stream" AND priority = High`.
     pub async fn search(&self, query: &str) -> Result<Vec<Issue>, JiraQueryError> {
         // The initial request, common to all pagination methods.
-        let mut request = Request {
+        let request = Request {
             method: Method::Search(query),
             pagination: &self.pagination,
             start_at: 0,
@@ -233,24 +246,8 @@ impl JiraInstance {
         // If Pagination is set to ChunkSize, split the issue keys into chunk by chunk size
         // and request each chunk separately.
         if let Pagination::ChunkSize(chunk_size) = self.pagination {
-            let mut all_issues = Vec::new();
-
-            loop {
-                let mut chunk_issues = self.chunk_of_issues(&request).await?;
-                // Calculate the length now before the content moves to `all_issues`.
-                let page_size = chunk_issues.len();
-                all_issues.append(&mut chunk_issues);
-
-                // If this page contains fewer issues than the chunk size,
-                // it's the last page. Stop the loop.
-                if page_size < chunk_size as usize {
-                    break;
-                }
-
-                request.start_at += chunk_size;
-            }
-
-            Ok(all_issues)
+            let paginated_issues = self.paginated_issues(request, chunk_size).await;
+            paginated_issues
         // If Pagination is not set to ChunkSize, use a single chunk request for all issues.
         } else {
             let issues = self.chunk_of_issues(&request).await?;
