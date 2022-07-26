@@ -98,4 +98,5 @@ async fn search_for_issues_start_at() {
     let issues = instance.search(query).await.unwrap();
     // The query should result in hundreds of issues.
     assert!(issues.len() > 50);
+    eprintln!("The number of issues: {}", issues.len());
 }

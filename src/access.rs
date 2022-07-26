@@ -175,20 +175,22 @@ impl JiraInstance {
 
         // If Pagination is set to ChunkSize, split the issue keys into chunk by chunk size
         // and request each chunk separately.
-        if let Pagination::ChunkSize(size) = self.pagination {
+        if let Pagination::ChunkSize(chunk_size) = self.pagination {
             let mut all_issues = Vec::new();
 
             loop {
                 let mut chunk_issues = self.chunk_of_issues(&request).await?;
+                // Calculate the length now before the content moves to `all_issues`.
+                let page_size = chunk_issues.len();
+                all_issues.append(&mut chunk_issues);
 
-                // End the loop if no more issues are coming on the this page.
-                if chunk_issues.is_empty() {
+                // If this page contains fewer issues than the chunk size,
+                // it's the last page. Stop the loop.
+                if page_size < chunk_size as usize {
                     break;
                 }
 
-                all_issues.append(&mut chunk_issues);
-
-                request.start_at += size;
+                request.start_at += chunk_size;
             }
 
             Ok(all_issues)
@@ -230,20 +232,22 @@ impl JiraInstance {
 
         // If Pagination is set to ChunkSize, split the issue keys into chunk by chunk size
         // and request each chunk separately.
-        if let Pagination::ChunkSize(size) = self.pagination {
+        if let Pagination::ChunkSize(chunk_size) = self.pagination {
             let mut all_issues = Vec::new();
 
             loop {
                 let mut chunk_issues = self.chunk_of_issues(&request).await?;
+                // Calculate the length now before the content moves to `all_issues`.
+                let page_size = chunk_issues.len();
+                all_issues.append(&mut chunk_issues);
 
-                // End the loop if no more issues are coming on the this page.
-                if chunk_issues.is_empty() {
+                // If this page contains fewer issues than the chunk size,
+                // it's the last page. Stop the loop.
+                if page_size < chunk_size as usize {
                     break;
                 }
 
-                all_issues.append(&mut chunk_issues);
-
-                request.start_at += size;
+                request.start_at += chunk_size;
             }
 
             Ok(all_issues)
