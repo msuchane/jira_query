@@ -96,7 +96,6 @@ async fn search_for_issues_start_at() {
     let instance = rh_jira().paginate(Pagination::ChunkSize(30));
     let query = r#"project="CentOS Stream""#;
     let issues = instance.search(query).await.unwrap();
-    // The query should result in hundreds of issues.
-    assert!(issues.len() > 50);
-    eprintln!("The number of issues: {}", issues.len());
+    // The query should result in at least 1,000 issues.
+    assert!(issues.len() > 1000);
 }
