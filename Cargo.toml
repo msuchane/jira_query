@@ -4,7 +4,7 @@ authors = ["Marek Suchánek <msuchane@redhat.com>"]
 version = "0.7.4"
 edition = "2021"
 # Check the Rust version using `cargo msrv verify`.
-rust-version = "1.62"
+rust-version = "1.56"
 license = "Apache-2.0"
 description = "Access tickets on a remote Jira instance."
 readme = "README.md"
