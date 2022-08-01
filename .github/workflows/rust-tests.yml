@@ -1,0 +1,20 @@
+name: Rust tests
+
+on: [ push ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  test:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Check syntax
+      run: cargo check
+    - name: Run tests
+      run: cargo test
+    - name: Check lints
+      run: cargo clippy
