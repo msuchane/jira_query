@@ -20,15 +20,17 @@ pub struct JiraInstance {
 }
 
 /// The authentication method used to contact Jira.
-#[derive(Default)]
 pub enum Auth {
-    #[default]
     Anonymous,
     ApiKey(String),
-    Basic {
-        user: String,
-        password: String,
-    },
+    Basic { user: String, password: String },
+}
+
+// We could set a default enum variant and derive, but that raises the MSRV to 1.62.
+impl Default for Auth {
+    fn default() -> Self {
+        Self::Anonymous
+    }
 }
 
 /// Controls the upper limit of how many tickets the response from Jira can contain:
@@ -39,12 +41,17 @@ pub enum Auth {
 /// * `ChunkSize`: Access the tickets in a series of requests, each accessing the number of tickets equal to the chunk size.
 /// This enables you to access an unlimited number of tickets, as long as the chunk size is smaller
 /// than the maximum allowed results size for the instance.
-#[derive(Default)]
 pub enum Pagination {
-    #[default]
     Default,
     MaxResults(u32),
     ChunkSize(u32),
+}
+
+// We could set a default enum variant and derive, but that raises the MSRV to 1.62.
+impl Default for Pagination {
+    fn default() -> Self {
+        Self::Default
+    }
 }
 
 /// This struct temporarily groups together all the parameters to make a REST request.
