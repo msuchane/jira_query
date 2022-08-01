@@ -1,3 +1,14 @@
+// Enable additional clippy lints by default.
+#![warn(
+    clippy::pedantic,
+    clippy::unwrap_used,
+    clippy::expect_used,
+    clippy::clone_on_ref_ptr,
+    clippy::todo
+)]
+// Forbid unsafe code in this program.
+#![forbid(unsafe_code)]
+
 mod access;
 mod errors;
 mod issue_model;
