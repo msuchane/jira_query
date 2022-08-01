@@ -1,5 +1,7 @@
 # jira_query
 
+[![Rust tests](https://github.com/msuchane/jira_query/actions/workflows/rust-tests.yml/badge.svg)](https://github.com/msuchane/jira_query/actions/workflows/rust-tests.yml)
+
 Access issues on a remote Jira instance.
 
 **WARNING**: This crate is in early stages of development. The interface will change, and it might not work at all in your environment.
