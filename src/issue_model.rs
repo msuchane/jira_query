@@ -177,7 +177,7 @@ pub struct Project {
     #[serde(rename = "projectTypeKey")]
     pub project_type_key: String,
     #[serde(rename = "projectCategory")]
-    pub project_category: ProjectCategory,
+    pub project_category: Option<ProjectCategory>,
     #[serde(rename = "avatarUrls")]
     pub avatar_urls: AvatarUrls,
     #[serde(rename = "self")]
