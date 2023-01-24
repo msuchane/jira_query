@@ -1,4 +1,3 @@
-use chrono::prelude::*;
 use tokio;
 
 use jira_query::*;
@@ -68,8 +67,8 @@ async fn check_time() {
     let instance = rh_jira();
     let issue = instance.issue("CS-1113").await.unwrap();
 
-    let date_created = chrono::Utc.ymd(2022, 5, 24);
-    assert_eq!(issue.fields.created.date(), date_created);
+    let date_created = chrono::NaiveDate::from_ymd_opt(2022, 5, 24).unwrap();
+    assert_eq!(issue.fields.created.date_naive(), date_created);
 }
 
 /// Try accessing issues that match a JQL search.

@@ -97,7 +97,7 @@ impl<'a> Method<'a> {
 /// API call with one &str parameter
 impl RestPath<&str> for Issue {
     fn get_path(param: &str) -> Result<String, restson::Error> {
-        Ok(format!("{}/issue/{}", REST_PREFIX, param))
+        Ok(format!("{REST_PREFIX}/issue/{param}"))
     }
 }
 
@@ -109,12 +109,11 @@ impl RestPath<&Request<'_>> for JqlResults {
             // For both MaxResults and ChunkSIze, set the maxResults size to the value set in the variant.
             // The maxResults size is relevant for ChunkSize in that each chunk requires its own results
             // to be at least this large.
-            Pagination::MaxResults(n) | Pagination::ChunkSize(n) => format!("&maxResults={}", n),
+            Pagination::MaxResults(n) | Pagination::ChunkSize(n) => format!("&maxResults={n}"),
         };
         let start_at = format!("&startAt={}", request.start_at);
         Ok(format!(
-            "{}/search?jql={}{}{}",
-            REST_PREFIX,
+            "{REST_PREFIX}/search?jql={}{}{}",
             request.method.url_fragment(),
             max_results,
             start_at,
@@ -148,7 +147,7 @@ impl JiraInstance {
         match &self.auth {
             Auth::ApiKey(key) => {
                 self.client
-                    .set_header("Authorization", &format!("Bearer {}", key))?;
+                    .set_header("Authorization", &format!("Bearer {key}"))?;
             }
             Auth::Basic { user, password } => {
                 self.client.set_auth(user, password);
