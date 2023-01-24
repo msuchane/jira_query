@@ -144,6 +144,17 @@ impl JiraInstance {
         )
     }
 
+    /// Download the specified URL using the configured authentication.
+    async fn authenticated_get(&self, url: &str) -> Result<reqwest::Response, reqwest::Error> {
+        let request_builder = self.client.get(url);
+        let authenticated = match &self.auth {
+            Auth::Anonymous => request_builder,
+            Auth::ApiKey(key) => request_builder.header("Authorization", &format!("Bearer {key}")),
+            Auth::Basic { user, password } => request_builder.basic_auth(user, Some(password)),
+        };
+        authenticated.send().await
+    }
+
     // This method uses a separate implementation from `issues` because Jira provides a way
     // to request a single ticket specifically. That conveniently handles error cases
     // where no tickets might match, or more than one might.
@@ -152,14 +163,7 @@ impl JiraInstance {
         let url = self.path(&Method::Key(key), 0);
 
         // Gets an issue by ID and deserializes the JSON to data variable
-        let response = self
-            .client
-            .get(&url)
-            .send()
-            .await?;
-        let issue = response
-            .json::<Issue>()
-            .await?;
+        let issue = self.authenticated_get(&url).await?.json::<Issue>().await?;
 
         log::debug!("{:#?}", issue);
 
@@ -234,13 +238,15 @@ impl JiraInstance {
 
     /// Download a specific list (chunk) of issues.
     /// Reused elsewhere as a building block of different pagination methods.
-    async fn chunk_of_issues(&self, method: &Method<'_>, start_at: u32) -> Result<Vec<Issue>, JiraQueryError> {
+    async fn chunk_of_issues(
+        &self,
+        method: &Method<'_>,
+        start_at: u32,
+    ) -> Result<Vec<Issue>, JiraQueryError> {
         let url = self.path(method, start_at);
 
         let results = self
-            .client
-            .get(&url)
-            .send()
+            .authenticated_get(&url)
             .await?
             .json::<JqlResults>()
             .await?;
