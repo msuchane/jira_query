@@ -23,6 +23,6 @@ pub enum JiraQueryError {
     MissingIssues(Vec<String>),
     #[error("The Jira query returned no issues.")]
     NoIssues,
-    #[error("Error in the Jira REST API.")]
-    Rest(#[from] restson::Error),
+    #[error("Error in accessing the Jira REST API.")]
+    Request(#[from] reqwest::Error),
 }

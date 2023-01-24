@@ -36,7 +36,7 @@ async fn access_missing_issue() {
 
     assert!(issues.is_err());
     // TODO: This case should actually match JiraQueryError::NoIssues, not JiraQueryError::Rest. Fix it.
-    assert!(matches!(issues.unwrap_err(), JiraQueryError::Rest(_)));
+    assert!(matches!(issues.unwrap_err(), JiraQueryError::Request(_)));
 }
 
 /// Check that the issue fields contain the expected values.

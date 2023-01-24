@@ -18,8 +18,6 @@ limitations under the License.
 // * https://docs.atlassian.com/software/jira/docs/api/REST/latest/
 // * https://docs.atlassian.com/jira-software/REST/latest/
 
-use restson::{RestClient, RestPath};
-
 use crate::errors::JiraQueryError;
 use crate::issue_model::{Issue, JqlResults};
 
@@ -32,7 +30,7 @@ pub struct JiraInstance {
     pub host: String,
     pub auth: Auth,
     pub pagination: Pagination,
-    client: RestClient,
+    client: reqwest::Client,
 }
 
 /// The authentication method used to contact Jira.
@@ -70,17 +68,10 @@ impl Default for Pagination {
     }
 }
 
-/// This struct temporarily groups together all the parameters to make a REST request.
-/// It exists here because `RestPath` is only generic over a single parameter.
-struct Request<'a> {
-    method: Method<'a>,
-    pagination: &'a Pagination,
-    start_at: u32,
-}
-
 /// The method of the request to Jira. Either request specific IDs,
 /// or use a free-form JQL search query.
 enum Method<'a> {
+    Key(&'a str),
     Keys(&'a [&'a str]),
     Search(&'a str),
 }
@@ -88,36 +79,10 @@ enum Method<'a> {
 impl<'a> Method<'a> {
     fn url_fragment(&self) -> String {
         match self {
-            Self::Keys(ids) => format!("id%20in%20({})", ids.join(",")),
-            Self::Search(query) => (*query).to_string(),
+            Self::Key(id) => format!("issue/{id}"),
+            Self::Keys(ids) => format!("search?jql=id%20in%20({})", ids.join(",")),
+            Self::Search(query) => format!("search?jql={query}"),
         }
-    }
-}
-
-/// API call with one &str parameter
-impl RestPath<&str> for Issue {
-    fn get_path(param: &str) -> Result<String, restson::Error> {
-        Ok(format!("{REST_PREFIX}/issue/{param}"))
-    }
-}
-
-/// API call with several &str parameters representing the IDs of issues.
-impl RestPath<&Request<'_>> for JqlResults {
-    fn get_path(request: &Request) -> Result<String, restson::Error> {
-        let max_results = match request.pagination {
-            Pagination::Default => String::new(),
-            // For both MaxResults and ChunkSIze, set the maxResults size to the value set in the variant.
-            // The maxResults size is relevant for ChunkSize in that each chunk requires its own results
-            // to be at least this large.
-            Pagination::MaxResults(n) | Pagination::ChunkSize(n) => format!("&maxResults={n}"),
-        };
-        let start_at = format!("&startAt={}", request.start_at);
-        Ok(format!(
-            "{REST_PREFIX}/search?jql={}{}{}",
-            request.method.url_fragment(),
-            max_results,
-            start_at,
-        ))
     }
 }
 
@@ -127,7 +92,7 @@ impl JiraInstance {
     pub fn at(host: String) -> Result<Self, JiraQueryError> {
         // TODO: This function takes host as a String, even though client is happy with &str.
         // The String is only used in the host struct attribute.
-        let client = RestClient::new(&host)?;
+        let client = reqwest::Client::new();
 
         Ok(Self {
             host,
@@ -138,23 +103,10 @@ impl JiraInstance {
     }
 
     /// Set the authentication method of this `JiraInstance`.
-    pub fn authenticate(mut self, auth: Auth) -> Result<Self, JiraQueryError> {
+    #[must_use]
+    pub fn authenticate(mut self, auth: Auth) -> Self {
         self.auth = auth;
-        // Apply the configured authentication.
-        // If the user selects the API key authorization, set the API key in the request header.
-        // If the user selects the basic user and password authentication, set them in the client.
-        // Otherwise, the anonymous authorization doesn't modify the request in any way.
-        match &self.auth {
-            Auth::ApiKey(key) => {
-                self.client
-                    .set_header("Authorization", &format!("Bearer {key}"))?;
-            }
-            Auth::Basic { user, password } => {
-                self.client.set_auth(user, password);
-            }
-            Auth::Anonymous => {}
-        }
-        Ok(self)
+        self
     }
 
     /// Set the pagination method of this `JiraInstance`.
@@ -164,14 +116,51 @@ impl JiraInstance {
         self
     }
 
+    /// Based on the request method, form a complete, absolute URL
+    /// to download the tickets from the REST API.
+    #[must_use]
+    fn path(&self, method: &Method, start_at: u32) -> String {
+        let max_results = match self.pagination {
+            Pagination::Default => String::new(),
+            // For both MaxResults and ChunkSIze, set the maxResults size to the value set in the variant.
+            // The maxResults size is relevant for ChunkSize in that each chunk requires its own results
+            // to be at least this large.
+            Pagination::MaxResults(n) | Pagination::ChunkSize(n) => format!("&maxResults={n}"),
+        };
+
+        // The `startAt` option is only valid with JQL. With a URL by key, it breaks the REST query.
+        let start_at = match method {
+            Method::Key(_) => String::new(),
+            Method::Keys(_) | Method::Search(_) => format!("&startAt={start_at}"),
+        };
+
+        format!(
+            "{}/{}/{}{}{}",
+            self.host,
+            REST_PREFIX,
+            method.url_fragment(),
+            max_results,
+            start_at,
+        )
+    }
+
     // This method uses a separate implementation from `issues` because Jira provides a way
     // to request a single ticket specifically. That conveniently handles error cases
     // where no tickets might match, or more than one might.
     /// Access a single issue by its key.
     pub async fn issue(&self, key: &str) -> Result<Issue, JiraQueryError> {
+        let url = self.path(&Method::Key(key), 0);
+
         // Gets an issue by ID and deserializes the JSON to data variable
-        let data: restson::Response<Issue> = self.client.get(key).await?;
-        let issue = data.into_inner();
+        let response = self
+            .client
+            .get(&url)
+            .send()
+            .await?;
+        let issue = response
+            .json::<Issue>()
+            .await?;
+
         log::debug!("{:#?}", issue);
 
         Ok(issue)
@@ -188,21 +177,16 @@ impl JiraInstance {
             return Ok(Vec::new());
         }
 
-        // The initial request, common to all pagination methods.
-        let request = Request {
-            method: Method::Keys(keys),
-            pagination: &self.pagination,
-            start_at: 0,
-        };
+        let method = Method::Keys(keys);
 
         // If Pagination is set to ChunkSize, split the issue keys into chunk by chunk size
         // and request each chunk separately.
         if let Pagination::ChunkSize(chunk_size) = self.pagination {
-            let paginated_issues = self.paginated_issues(request, chunk_size).await;
+            let paginated_issues = self.paginated_issues(&method, chunk_size).await;
             paginated_issues
         // If Pagination is not set to ChunkSize, use a single chunk request for all issues.
         } else {
-            let issues = self.chunk_of_issues(&request).await?;
+            let issues = self.chunk_of_issues(&method, 0).await?;
 
             // If the resulting list is empty, return an error.
             // TODO: The REST parsing above already results in an error if the results are empty.
@@ -224,13 +208,14 @@ impl JiraInstance {
     /// <https://confluence.atlassian.com/jirakb/changing-maxresults-parameter-for-jira-rest-api-779160706.html>.
     async fn paginated_issues(
         &self,
-        mut request: Request<'_>,
+        method: &Method<'_>,
         chunk_size: u32,
     ) -> Result<Vec<Issue>, JiraQueryError> {
         let mut all_issues = Vec::new();
+        let mut start_at = 0;
 
         loop {
-            let mut chunk_issues = self.chunk_of_issues(&request).await?;
+            let mut chunk_issues = self.chunk_of_issues(method, start_at).await?;
             // Calculate the length now before the content moves to `all_issues`.
             let page_size = chunk_issues.len();
             all_issues.append(&mut chunk_issues);
@@ -241,7 +226,7 @@ impl JiraInstance {
                 break;
             }
 
-            request.start_at += chunk_size;
+            start_at += chunk_size;
         }
 
         Ok(all_issues)
@@ -249,9 +234,17 @@ impl JiraInstance {
 
     /// Download a specific list (chunk) of issues.
     /// Reused elsewhere as a building block of different pagination methods.
-    async fn chunk_of_issues(&self, request: &Request<'_>) -> Result<Vec<Issue>, JiraQueryError> {
-        let data: restson::Response<JqlResults> = self.client.get(request).await?;
-        let results = data.into_inner();
+    async fn chunk_of_issues(&self, method: &Method<'_>, start_at: u32) -> Result<Vec<Issue>, JiraQueryError> {
+        let url = self.path(method, start_at);
+
+        let results = self
+            .client
+            .get(&url)
+            .send()
+            .await?
+            .json::<JqlResults>()
+            .await?;
+
         log::debug!("{:#?}", results);
 
         Ok(results.issues)
@@ -261,21 +254,16 @@ impl JiraInstance {
     ///
     /// An example of a query: `project="CentOS Stream" AND priority = High`.
     pub async fn search(&self, query: &str) -> Result<Vec<Issue>, JiraQueryError> {
-        // The initial request, common to all pagination methods.
-        let request = Request {
-            method: Method::Search(query),
-            pagination: &self.pagination,
-            start_at: 0,
-        };
+        let method = Method::Search(query);
 
         // If Pagination is set to ChunkSize, split the issue keys into chunk by chunk size
         // and request each chunk separately.
         if let Pagination::ChunkSize(chunk_size) = self.pagination {
-            let paginated_issues = self.paginated_issues(request, chunk_size).await;
+            let paginated_issues = self.paginated_issues(&method, chunk_size).await;
             paginated_issues
         // If Pagination is not set to ChunkSize, use a single chunk request for all issues.
         } else {
-            let issues = self.chunk_of_issues(&request).await?;
+            let issues = self.chunk_of_issues(&method, 0).await?;
 
             Ok(issues)
         }
