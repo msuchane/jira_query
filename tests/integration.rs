@@ -75,8 +75,11 @@ async fn check_time() {
 #[tokio::test]
 async fn search_for_issues() {
     let instance = rh_jira();
-    let query = r#"project="CentOS Stream" AND priority = High"#;
-    let _issues = instance.search(query).await.unwrap();
+    let query = r#"project="CentOS Stream" AND priority=Blocker"#;
+    let issues = instance.search(query).await.unwrap();
+
+    // There should be at least a couple of blocker tickets for CentOS Stream.
+    assert!(issues.len() > 1);
 }
 
 /// Make sure that no IDs on the input result in no bugs, without errors.
