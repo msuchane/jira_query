@@ -8,6 +8,24 @@ fn rh_jira() -> JiraInstance {
     JiraInstance::at("https://issues.redhat.com".to_string()).unwrap()
 }
 
+/// A common convenience function to get anonymous access
+/// to the Atlassian Jira instance.
+fn atlassian_jira() -> JiraInstance {
+    JiraInstance::at("https://jira.atlassian.com/".to_string()).unwrap()
+}
+
+/// A common convenience function to get anonymous access
+/// to the Apache Jira instance.
+fn apache_jira() -> JiraInstance {
+    JiraInstance::at("https://issues.apache.org/jira/".to_string()).unwrap()
+}
+
+/// A common convenience function to get anonymous access
+/// to the Spring Jira instance.
+fn spring_jira() -> JiraInstance {
+    JiraInstance::at("https://jira.spring.io/".to_string()).unwrap()
+}
+
 /// Try accessing several public issues separately
 /// to test the client and the deserialization.
 #[tokio::test]
@@ -57,7 +75,7 @@ async fn check_standard_fields() {
     assert_eq!(issue.fields.issuetype.name, "Task");
     assert_eq!(issue.fields.project.key, "CS");
     assert_eq!(issue.fields.project.name, "CentOS Stream");
-    assert_eq!(issue.fields.priority.name, "Normal");
+    assert_eq!(issue.fields.priority.unwrap().name, "Normal");
 }
 
 /// Check that the issue was created at the expected date, and that time deserialization
@@ -100,4 +118,50 @@ async fn search_for_issues_start_at() {
     let issues = instance.search(query).await.unwrap();
     // The query should result in at least 1,000 issues.
     assert!(issues.len() > 1000);
+}
+
+/// Try accessing several public Atlassian issues
+/// to test the client and the deserialization.
+#[tokio::test]
+async fn access_atlassian_issues() {
+    let instance = atlassian_jira();
+    let _issues = instance
+        .issues(&["ACCESS-1427", "ACCESS-1364", "CLOUD-11546", "CLOUD-11236"])
+        .await
+        .unwrap();
+}
+
+/// Try accessing Atlassian issues created between two dates,
+/// using a JQL search.
+#[tokio::test]
+async fn search_for_atlassian_issues() {
+    let instance = atlassian_jira();
+    // Search for all closed CONFCLOUD issues created between 2022-11-12 and 2023-02-12.
+    let query = r#"project = CONFCLOUD AND status = Closed AND created >= 2022-11-12 AND created <= 2023-02-12"#;
+    let issues = instance.search(query).await.unwrap();
+
+    // There should be at least 39 such issues.
+    assert!(issues.len() >= 39);
+}
+
+/// Try accessing several public Apache issues
+/// to test the client and the deserialization.
+#[tokio::test]
+async fn access_apache_issues() {
+    let instance = apache_jira();
+    let _issues = instance
+        .issues(&["SVN-748", "SVN-750", "SPARK-41075", "SLING-10585"])
+        .await
+        .unwrap();
+}
+
+/// Try accessing several public Spring issues
+/// to test the client and the deserialization.
+#[tokio::test]
+async fn access_spring_issues() {
+    let instance = spring_jira();
+    let _issues = instance
+        .issues(&["INT-4571", "INT-4574", "AMQP-849", "AMQP-848"])
+        .await
+        .unwrap();
 }
