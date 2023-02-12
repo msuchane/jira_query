@@ -84,6 +84,7 @@ pub struct Fields {
     pub votes: Votes,
     pub parent: Option<CondensedIssue>,
     pub subtasks: Vec<CondensedIssue>,
+    pub environment: Option<String>,
     #[serde(flatten)]
     pub extra: Value,
 }
