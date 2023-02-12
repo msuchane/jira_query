@@ -171,7 +171,7 @@ pub struct Resolution {
 #[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
 pub struct IssueType {
     #[serde(rename = "avatarId")]
-    pub avatar_id: i32,
+    pub avatar_id: Option<i32>,
     pub description: String,
     #[serde(rename = "iconUrl")]
     pub icon_url: String,
