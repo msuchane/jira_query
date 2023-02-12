@@ -49,10 +49,16 @@ pub struct Fields {
     #[serde(rename = "lastViewed")]
     pub last_viewed: Option<DateTime<Utc>>,
     pub labels: Vec<String>,
-    pub versions: Vec<Version>,
     pub assignee: Option<User>,
     pub description: Option<String>,
     pub duedate: Option<NaiveDate>,
+    // Both `versions` and `fixVersions` are optional fields and they might
+    // either be missing or set to an empty list.
+    // I'm consolidating both cases as an empty list, because I don't believe
+    // that there's a meaningful semantic difference between them here.
+    #[serde(default)]
+    pub versions: Vec<Version>,
+    #[serde(default)]
     #[serde(rename = "fixVersions")]
     pub fix_versions: Vec<Version>,
     pub reporter: User,
@@ -72,7 +78,7 @@ pub struct Fields {
     pub summary: String,
     pub creator: User,
     pub project: Project,
-    pub priority: Priority,
+    pub priority: Option<Priority>,
     pub components: Vec<Component>,
     pub watches: Watches,
     pub archiveddate: Option<DateTime<Utc>>,
