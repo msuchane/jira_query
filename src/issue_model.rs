@@ -423,7 +423,7 @@ pub struct Visibility {
 // Also see if Serde can convert id to a number after all, somehow.
 pub struct Security {
     pub description: String,
-    pub id: u32,
+    pub id: String,
     pub name: String,
     #[serde(rename = "self")]
     pub self_link: String,
