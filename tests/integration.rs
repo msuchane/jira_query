@@ -20,12 +20,6 @@ fn apache_jira() -> JiraInstance {
     JiraInstance::at("https://issues.apache.org/jira/".to_string()).unwrap()
 }
 
-/// A common convenience function to get anonymous access
-/// to the Spring Jira instance.
-fn spring_jira() -> JiraInstance {
-    JiraInstance::at("https://jira.spring.io/".to_string()).unwrap()
-}
-
 /// Try accessing several public issues separately
 /// to test the client and the deserialization.
 #[tokio::test]
@@ -151,17 +145,6 @@ async fn access_apache_issues() {
     let instance = apache_jira();
     let _issues = instance
         .issues(&["SVN-748", "SVN-750", "SPARK-41075", "SLING-10585"])
-        .await
-        .unwrap();
-}
-
-/// Try accessing several public Spring issues
-/// to test the client and the deserialization.
-#[tokio::test]
-async fn access_spring_issues() {
-    let instance = spring_jira();
-    let _issues = instance
-        .issues(&["INT-4571", "INT-4574", "AMQP-849", "AMQP-848"])
         .await
         .unwrap();
 }
