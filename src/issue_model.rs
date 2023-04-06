@@ -91,6 +91,7 @@ pub struct Fields {
     pub parent: Option<CondensedIssue>,
     pub subtasks: Vec<CondensedIssue>,
     pub environment: Option<String>,
+    pub security: Option<Security>,
     #[serde(flatten)]
     pub extra: Value,
 }
@@ -410,6 +411,22 @@ pub struct CondensedFields {
 pub struct Visibility {
     pub r#type: String,
     pub value: String,
+    #[serde(flatten)]
+    pub extra: Value,
+}
+
+/// The security level of a Jira issue.
+#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+// TODO: This seems to be a generic container, similar to several other structs.
+// In a future major release, try to consolidate them into one generic struct with:
+// description, id, name.
+// Also see if Serde can convert id to a number after all, somehow.
+pub struct Security {
+    pub description: String,
+    pub id: u32,
+    pub name: String,
+    #[serde(rename = "self")]
+    pub self_link: String,
     #[serde(flatten)]
     pub extra: Value,
 }
