@@ -18,7 +18,7 @@ use chrono::{DateTime, NaiveDate, Utc};
 /// This module replicates the fields in a Jira issue as strongly typed structs.
 /// Any extra fields that come from a custom Jira configuration are captured
 /// in the `extra` hash map in the parent struct.
-use serde::Deserialize;
+use serde::{Serialize, Deserialize};
 use serde_json::Value;
 
 /// The response from Jira to a JQL query,
@@ -31,7 +31,7 @@ pub struct JqlResults {
 }
 
 /// A single Jira issue with all its fields.
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Issue {
     pub id: String,
     pub key: String,
@@ -44,7 +44,7 @@ pub struct Issue {
 }
 
 /// A container for most fields of a Jira issue.
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Fields {
     #[serde(rename = "lastViewed")]
     pub last_viewed: Option<DateTime<Utc>>,
@@ -97,7 +97,7 @@ pub struct Fields {
 }
 
 /// The representation of a Jira user account.
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct User {
     pub active: bool,
     #[serde(rename = "displayName")]
@@ -117,14 +117,14 @@ pub struct User {
 }
 
 /// The representation of a Jira product version.
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Version {
     pub id: String,
     pub description: Option<String>,
     pub name: String,
     pub archived: bool,
     pub released: bool,
-    /// Jira stores `releaseDate` only as `YYYY-MM-DD`, so it can't deserialize to full `DateTime`.
+    /// Jira stores `releaseDate` only as `YYYY-MM-DD`, so it can't Serialize, Deserialize to full `DateTime`.
     #[serde(rename = "releaseDate")]
     pub release_date: Option<NaiveDate>,
     #[serde(rename = "self")]
@@ -134,7 +134,7 @@ pub struct Version {
 }
 
 /// The Jira issue status.
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Status {
     pub description: String,
     #[serde(rename = "iconUrl")]
@@ -150,7 +150,7 @@ pub struct Status {
 }
 
 /// The category of a Jira issue status.
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct StatusCategory {
     #[serde(rename = "colorName")]
     pub color_name: String,
@@ -164,7 +164,7 @@ pub struct StatusCategory {
 }
 
 /// The resolution of a Jira issue when it's closed.
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Resolution {
     pub description: String,
     pub id: String,
@@ -176,7 +176,7 @@ pub struct Resolution {
 }
 
 /// The type of a Jira issue.
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct IssueType {
     #[serde(rename = "avatarId")]
     pub avatar_id: Option<i32>,
@@ -193,7 +193,7 @@ pub struct IssueType {
 }
 
 /// A project namespace that groups Jira issues.
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Project {
     pub id: String,
     pub key: String,
@@ -211,7 +211,7 @@ pub struct Project {
 }
 
 /// The category of a Jira project.
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct ProjectCategory {
     pub description: String,
     pub id: String,
@@ -223,7 +223,7 @@ pub struct ProjectCategory {
 }
 
 /// The priority of a Jira issue.
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Priority {
     #[serde(rename = "iconUrl")]
     pub icon_url: String,
@@ -236,7 +236,7 @@ pub struct Priority {
 }
 
 /// The component of a Jira issue.
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Component {
     pub description: Option<String>,
     pub id: String,
@@ -248,7 +248,7 @@ pub struct Component {
 }
 
 /// Users watching a Jira issue.
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Watches {
     #[serde(rename = "isWatching")]
     pub is_watching: bool,
@@ -261,7 +261,7 @@ pub struct Watches {
 }
 
 /// The progress of a Jira issue.
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Progress {
     pub progress: i32,
     pub total: i32,
@@ -270,7 +270,7 @@ pub struct Progress {
 }
 
 /// A comment below a Jira issue.
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Comment {
     pub author: User,
     pub body: String,
@@ -287,7 +287,7 @@ pub struct Comment {
 }
 
 /// A container for all comments below a Jira issue.
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Comments {
     pub comments: Vec<Comment>,
     #[serde(rename = "maxResults")]
@@ -300,7 +300,7 @@ pub struct Comments {
 }
 
 /// A link from one Jira issue to another.
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct IssueLink {
     pub id: String,
     #[serde(rename = "outwardIssue")]
@@ -316,7 +316,7 @@ pub struct IssueLink {
 }
 
 /// A Jira issue linked from another one.
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct LinkedIssue {
     pub id: String,
     pub key: String,
@@ -328,7 +328,7 @@ pub struct LinkedIssue {
 }
 
 /// The reduced fields of a linked Jira issue.
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct LinkedIssueFields {
     pub issuetype: IssueType,
     pub priority: Option<Priority>,
@@ -339,7 +339,7 @@ pub struct LinkedIssueFields {
 }
 
 /// The direction of a link to a Jira issue.
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct IssueLinkType {
     pub id: String,
     pub inward: String,
@@ -352,7 +352,7 @@ pub struct IssueLinkType {
 }
 
 /// The votes for a Jira issue.
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Votes {
     #[serde(rename = "hasVoted")]
     pub has_voted: bool,
@@ -369,7 +369,7 @@ pub struct Votes {
 /// * `small` = 24x24 px
 /// * `medium` = 48x48 px
 /// * `full` = maximum
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct AvatarUrls {
     #[serde(rename = "16x16")]
     pub xsmall: String,
@@ -384,7 +384,7 @@ pub struct AvatarUrls {
 }
 
 /// A minimal, reduced representation of a Jira issue.
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct CondensedIssue {
     pub fields: CondensedFields,
     pub id: String,
@@ -396,7 +396,7 @@ pub struct CondensedIssue {
 }
 
 /// A minimal, reduced listing of the fields of a Jira issue.
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct CondensedFields {
     pub issuetype: IssueType,
     pub priority: Priority,
@@ -407,7 +407,7 @@ pub struct CondensedFields {
 }
 
 /// The visibility of a Jira issue.
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Visibility {
     pub r#type: String,
     pub value: String,
@@ -416,7 +416,7 @@ pub struct Visibility {
 }
 
 /// The security level of a Jira issue.
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 // TODO: This seems to be a generic container, similar to several other structs.
 // In a future major release, try to consolidate them into one generic struct with:
 // description, id, name.
