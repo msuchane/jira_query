@@ -399,7 +399,7 @@ pub struct CondensedIssue {
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct CondensedFields {
     pub issuetype: IssueType,
-    pub priority: Priority,
+    pub priority: Option<Priority>,
     pub status: Status,
     pub summary: String,
     #[serde(flatten)]
