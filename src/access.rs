@@ -186,8 +186,7 @@ impl JiraInstance {
         // If Pagination is set to ChunkSize, split the issue keys into chunk by chunk size
         // and request each chunk separately.
         if let Pagination::ChunkSize(chunk_size) = self.pagination {
-            let paginated_issues = self.paginated_issues(&method, chunk_size).await;
-            paginated_issues
+            self.paginated_issues(&method, chunk_size).await
         // If Pagination is not set to ChunkSize, use a single chunk request for all issues.
         } else {
             let issues = self.chunk_of_issues(&method, 0).await?;
@@ -265,8 +264,7 @@ impl JiraInstance {
         // If Pagination is set to ChunkSize, split the issue keys into chunk by chunk size
         // and request each chunk separately.
         if let Pagination::ChunkSize(chunk_size) = self.pagination {
-            let paginated_issues = self.paginated_issues(&method, chunk_size).await;
-            paginated_issues
+            self.paginated_issues(&method, chunk_size).await
         // If Pagination is not set to ChunkSize, use a single chunk request for all issues.
         } else {
             let issues = self.chunk_of_issues(&method, 0).await?;
