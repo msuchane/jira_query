@@ -61,6 +61,12 @@ async fn main() -> Result<(), Box<dyn Error>> {
 }
 ```
 
+## A note on semantic versioning
+
+This crate reserves the right to make limited breaking changes to the Jira structs in minor versions (`X.Y`).
+
+The reason is that the official Jira documentation does not specify which fields in the JSON body are optional (`Option<T>`) and which are mandatory (`T`). Rather than exposing all fields as optional, this crate tries to process fields as mandatory until proven otherwise in testing. As a consequence, minor releases must occasionally turn a mandatory field to an optional field.
+
 ## See also
 
 * [`bugzilla_query`](https://crates.io/crates/bugzilla_query), a similar interface to Bugzilla
