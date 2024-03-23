@@ -109,6 +109,13 @@ impl JiraInstance {
         self
     }
 
+    /// Set the http client of this `JiraInstance`.
+    #[must_use]
+    pub fn with_client(mut self, client: reqwest::Client) -> Self {
+        self.client = client;
+        self
+    }
+
     /// Set the pagination method of this `JiraInstance`.
     #[must_use]
     pub const fn paginate(mut self, pagination: Pagination) -> Self {
