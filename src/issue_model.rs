@@ -74,7 +74,7 @@ pub struct Fields {
     pub aggregatetimeoriginalestimate: Option<i32>,
     pub progress: Progress,
     pub aggregateprogress: Progress,
-    pub workratio: i32,
+    pub workratio: i64,
     pub summary: String,
     pub creator: User,
     pub project: Project,
