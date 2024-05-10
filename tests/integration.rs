@@ -65,10 +65,10 @@ async fn check_standard_fields() {
         "Set gitlab.com/redhat/centos-stream/tests to public"
     );
     assert_eq!(issue.fields.assignee.unwrap().display_name, "aoife moloney");
-    assert_eq!(issue.fields.reporter.display_name, "Don Zickus");
+    assert_eq!(issue.fields.reporter.display_name, "Donald Zickus");
     assert_eq!(issue.fields.issuetype.name, "Task");
     assert_eq!(issue.fields.project.key, "CS");
-    assert_eq!(issue.fields.project.name, "CentOS Stream");
+    assert_eq!(issue.fields.project.name, "CentOS Stream Pipeline");
     assert_eq!(issue.fields.priority.unwrap().name, "Normal");
 }
 
@@ -87,7 +87,7 @@ async fn check_time() {
 #[tokio::test]
 async fn search_for_issues() {
     let instance = rh_jira();
-    let query = r#"project="CentOS Stream" AND priority=Blocker"#;
+    let query = r#"project="CentOS Stream Pipeline" AND priority=Blocker"#;
     let issues = instance.search(query).await.unwrap();
 
     // There should be at least a couple of blocker tickets for CentOS Stream.
@@ -108,7 +108,7 @@ async fn check_no_issues() {
 #[tokio::test]
 async fn search_for_issues_start_at() {
     let instance = rh_jira().paginate(Pagination::ChunkSize(30));
-    let query = r#"project="CentOS Stream""#;
+    let query = r#"project="CentOS Stream Pipeline""#;
     let issues = instance.search(query).await.unwrap();
     // The query should result in at least 1,000 issues.
     assert!(issues.len() > 1000);
