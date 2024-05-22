@@ -104,8 +104,8 @@ pub struct User {
     pub display_name: String,
     #[serde(rename = "emailAddress")]
     pub email_address: Option<String>,
-    pub key: String,
-    pub name: String,
+    pub key: Option<String>,
+    pub name: Option<String>,
     #[serde(rename = "timeZone")]
     pub time_zone: String,
     #[serde(rename = "avatarUrls")]
@@ -114,6 +114,8 @@ pub struct User {
     pub self_link: String,
     #[serde(flatten)]
     pub extra: Value,
+    #[serde(rename = "accountId")]
+    pub account_id: Option<String>,
 }
 
 /// The representation of a Jira product version.
