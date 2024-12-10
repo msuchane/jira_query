@@ -20,6 +20,12 @@ fn apache_jira() -> JiraInstance {
     JiraInstance::at("https://issues.apache.org/jira/".to_string()).unwrap()
 }
 
+/// A common convenience function to get anonymous access
+/// to the Whamcloud Jira instance.
+fn whamcloud_jira() -> JiraInstance {
+    JiraInstance::at("https://jira.whamcloud.com".to_string()).unwrap()
+}
+
 /// Try accessing several public issues separately
 /// to test the client and the deserialization.
 #[tokio::test]
@@ -145,6 +151,15 @@ async fn access_apache_issues() {
     let instance = apache_jira();
     let _issues = instance
         .issues(&["SVN-748", "SVN-750", "SPARK-41075", "SLING-10585"])
+        .await
+        .unwrap();
+}
+
+#[tokio::test]
+async fn access_whamcloud_issues() {
+    let instance = whamcloud_jira();
+    let _issues = instance
+        .issues(&["LU-10647", "LU-13009", "LU-8002", "LU-8874"])
         .await
         .unwrap();
 }
