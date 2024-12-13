@@ -18,8 +18,13 @@ limitations under the License.
 // * https://docs.atlassian.com/software/jira/docs/api/REST/latest/
 // * https://docs.atlassian.com/jira-software/REST/latest/
 
+use chrono::Local;
+use serde::Serialize;
+use serde_json::Value;
+
 use crate::errors::JiraQueryError;
 use crate::issue_model::{Issue, JqlResults};
+use crate::{Comment, User};
 
 // The prefix of every subsequent REST request.
 // This string comes directly after the host in the URL.
@@ -74,6 +79,8 @@ enum Method<'a> {
     Key(&'a str),
     Keys(&'a [&'a str]),
     Search(&'a str),
+    User(&'a str),
+    Myself(),
 }
 
 impl<'a> Method<'a> {
@@ -82,6 +89,8 @@ impl<'a> Method<'a> {
             Self::Key(id) => format!("issue/{id}"),
             Self::Keys(ids) => format!("search?jql=id%20in%20({})", ids.join(",")),
             Self::Search(query) => format!("search?jql={query}"),
+            Self::User(id) => format!("user?accountId={id}"),
+            Self::Myself() => format!("myself"),
         }
     }
 }
@@ -137,7 +146,7 @@ impl JiraInstance {
 
         // The `startAt` option is only valid with JQL. With a URL by key, it breaks the REST query.
         let start_at = match method {
-            Method::Key(_) => String::new(),
+            Method::Key(_) | Method::User(_) | Method::Myself() => String::new(),
             Method::Keys(_) | Method::Search(_) => format!("&startAt={start_at}"),
         };
 
@@ -160,6 +169,24 @@ impl JiraInstance {
             Auth::Basic { user, password } => request_builder.basic_auth(user, Some(password)),
         };
         authenticated.send().await
+    }
+
+    async fn authenticated_post<T: Serialize + Sized>(
+        &self,
+        url: &str,
+        body: &T,
+    ) -> Result<reqwest::Response, reqwest::Error> {
+        let request_builder = self.client.post(url);
+        let authenticated = match &self.auth {
+            Auth::Anonymous => request_builder,
+            Auth::ApiKey(key) => request_builder.header("Authorization", &format!("Bearer {key}")),
+            Auth::Basic { user, password } => request_builder.basic_auth(user, Some(password)),
+        };
+        authenticated
+            .header("Content-Type", "application/json")
+            .json(body)
+            .send()
+            .await
     }
 
     // This method uses a separate implementation from `issues` because Jira provides a way
@@ -278,6 +305,39 @@ impl JiraInstance {
 
             Ok(issues)
         }
+    }
+
+    pub async fn post_comment(
+        &self,
+        issue_id: &str,
+        _user_id: &str,
+        content: &str,
+    ) -> Result<Comment, Box<dyn std::error::Error + Send + Sync>> {
+        let url = self.path(&Method::Key(issue_id), 0) + "/comment";
+
+        // let user_url = self.path(&Method::User(user_id), 0);
+        let user_url = self.path(&Method::Myself(), 0);
+
+        let user = self
+            .authenticated_get(&user_url)
+            .await?
+            .json::<User>()
+            .await?;
+
+        // TODO: If user_id != "", don't use myself
+        let comment = Comment {
+            author: Some(user),
+            body: content.to_owned(),
+            ..Default::default()
+        };
+
+        let comment = self
+            .authenticated_post(&url, &comment)
+            .await?
+            .json::<Comment>()
+            .await?;
+
+        Ok(comment)
     }
 }
 
