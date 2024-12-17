@@ -24,6 +24,7 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 # Version with a security patch:
 chrono = { version = ">=0.4.20", features = ["serde"] }
+tracing = "0.1.41"
 
 [dev-dependencies]
 tokio = { version = ">=1.37", features = ["full"] }

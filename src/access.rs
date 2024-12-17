@@ -18,9 +18,7 @@ limitations under the License.
 // * https://docs.atlassian.com/software/jira/docs/api/REST/latest/
 // * https://docs.atlassian.com/jira-software/REST/latest/
 
-use chrono::Local;
 use serde::Serialize;
-use serde_json::Value;
 
 use crate::errors::JiraQueryError;
 use crate::issue_model::{Issue, JqlResults};
@@ -315,14 +313,20 @@ impl JiraInstance {
     ) -> Result<Comment, Box<dyn std::error::Error + Send + Sync>> {
         let url = self.path(&Method::Key(issue_id), 0) + "/comment";
 
+        tracing::info!("URL: {}", url);
+
         // let user_url = self.path(&Method::User(user_id), 0);
         let user_url = self.path(&Method::Myself(), 0);
+
+        tracing::info!("User URL: {}", user_url);
 
         let user = self
             .authenticated_get(&user_url)
             .await?
             .json::<User>()
             .await?;
+
+        tracing::info!("User: {:#?}", user);
 
         // TODO: If user_id != "", don't use myself
         let comment = Comment {
@@ -331,11 +335,16 @@ impl JiraInstance {
             ..Default::default()
         };
 
-        let comment = self
-            .authenticated_post(&url, &comment)
-            .await?
-            .json::<Comment>()
-            .await?;
+        tracing::info!("Built comment: {:#?}", comment);
+
+        // let response = self.authenticated_post(&url, &comment).await?;
+        let response = self.authenticated_post(&url, &comment).await?;
+
+        tracing::info!("Response: {:#?}", response);
+
+        let comment = response.json::<Comment>().await?;
+
+        tracing::info!("Parsed comment: {:#?}", comment);
 
         Ok(comment)
     }
