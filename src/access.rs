@@ -326,7 +326,7 @@ impl JiraInstance {
 
         // TODO: If user_id != "", don't use myself
         let comment = Comment {
-            author: Some(user),
+            // author: Some(user),
             body: content.to_owned(),
             ..Default::default()
         };
