@@ -1,6 +1,6 @@
 [package]
 name = "jira_query"
-authors = ["Marek Suchánek <msuchane@redhat.com>"]
+authors = ["Marek Suchánek <marek.suchanek@protonmail.com>"]
 version = "1.5.0"
 edition = "2021"
 # Check the Rust version using `cargo msrv verify`.
@@ -18,7 +18,7 @@ categories = ["api-bindings"]
 
 [dependencies]
 log = "0.4"
-thiserror = "1.0"
+thiserror = "2.0"
 reqwest = { version = "0.12", features = ["json"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
@@ -26,4 +26,4 @@ serde_json = "1.0"
 chrono = { version = ">=0.4.20", features = ["serde"] }
 
 [dev-dependencies]
-tokio = { version = ">=1.37", features = ["full"] }
+tokio = { version = ">=1.45", features = ["full"] }
