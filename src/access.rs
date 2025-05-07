@@ -78,7 +78,7 @@ enum Method<'a> {
     Keys(&'a [&'a str]),
     Search(&'a str),
     User(&'a str),
-    Myself(),
+    Myself,
 }
 
 impl<'a> Method<'a> {
@@ -88,7 +88,7 @@ impl<'a> Method<'a> {
             Self::Keys(ids) => format!("search?jql=id%20in%20({})", ids.join(",")),
             Self::Search(query) => format!("search?jql={query}"),
             Self::User(id) => format!("user?accountId={id}"),
-            Self::Myself() => format!("myself"),
+            Self::Myself => "myself".to_string(),
         }
     }
 }
@@ -144,7 +144,7 @@ impl JiraInstance {
 
         // The `startAt` option is only valid with JQL. With a URL by key, it breaks the REST query.
         let start_at = match method {
-            Method::Key(_) | Method::User(_) | Method::Myself() => String::new(),
+            Method::Key(_) | Method::User(_) | Method::Myself => String::new(),
             Method::Keys(_) | Method::Search(_) => format!("&startAt={start_at}"),
         };
 
@@ -169,6 +169,7 @@ impl JiraInstance {
         authenticated.send().await
     }
 
+    /// Post the given body to the specified URL using the configured authentication.
     async fn authenticated_post<T: Serialize + Sized>(
         &self,
         url: &str,
@@ -305,20 +306,12 @@ impl JiraInstance {
         }
     }
 
-    pub async fn post_comment(
+    /// Access a Jira user by their user ID.
+    pub async fn user(
         &self,
-        issue_id: &str,
-        _user_id: &str,
-        content: &str,
-    ) -> Result<Comment, Box<dyn std::error::Error + Send + Sync>> {
-        let url = self.path(&Method::Key(issue_id), 0) + "/comment";
-
-        tracing::info!("URL: {}", url);
-
-        // let user_url = self.path(&Method::User(user_id), 0);
-        let user_url = self.path(&Method::Myself(), 0);
-
-        tracing::info!("User URL: {}", user_url);
+        user_id: &str,
+    ) -> Result<User, Box<dyn std::error::Error + Send + Sync>> {
+        let user_url = self.path(&Method::User(user_id), 0);
 
         let user = self
             .authenticated_get(&user_url)
@@ -326,25 +319,63 @@ impl JiraInstance {
             .json::<User>()
             .await?;
 
-        tracing::info!("User: {:#?}", user);
+        Ok(user)
+    }
 
-        // TODO: If user_id != "", don't use myself
+    /// Access information about my own user account.
+    pub async fn myself(
+        &self,
+    ) -> Result<User, Box<dyn std::error::Error + Send + Sync>> {
+        let user_url = self.path(&Method::Myself, 0);
+
+        let user = self
+            .authenticated_get(&user_url)
+            .await?
+            .json::<User>()
+            .await?;
+
+        Ok(user)
+    }
+
+    /// Post a comment to a Jira issue.
+    ///
+    /// Specify `user_id` to post the comment as a specific user. Otherwise,
+    /// if `user_id` is None, you're posting the comment as yourself.
+    pub async fn post_comment(
+        &self,
+        issue_id: &str,
+        user_id: Option<&str>,
+        content: &str,
+    ) -> Result<Comment, Box<dyn std::error::Error + Send + Sync>> {
+        let url = self.path(&Method::Key(issue_id), 0) + "/comment";
+
+        log::debug!("Comment URL: {}", url);
+
+        let user = if let Some(user_id) = user_id {
+            let u = self.user(user_id).await?;
+            log::debug!("Commenting user: {:#?}", u);
+            Some(u)
+        } else {
+            log::debug!("Commenting as myself.");
+            None
+        };
+
         let comment = Comment {
-            // author: Some(user),
+            // If the author is None, we're commenting as "myself"
+            author: user,
             body: content.to_owned(),
             ..Default::default()
         };
 
-        tracing::info!("Built comment: {:#?}", comment);
+        log::debug!("Prepared comment: {:#?}", comment);
 
-        // let response = self.authenticated_post(&url, &comment).await?;
         let response = self.authenticated_post(&url, &comment).await?;
 
-        tracing::info!("Response: {:#?}", response);
+        log::debug!("Response to comment: {:#?}", response);
 
         let comment = response.json::<Comment>().await?;
 
-        tracing::info!("Parsed comment: {:#?}", comment);
+        log::debug!("Parsed comment: {:#?}", comment);
 
         Ok(comment)
     }
