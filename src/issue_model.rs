@@ -272,18 +272,18 @@ pub struct Progress {
 }
 
 /// A comment below a Jira issue.
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, Default)]
 pub struct Comment {
-    pub author: User,
+    pub author: Option<User>,
     pub body: String,
-    pub created: DateTime<Utc>,
-    pub id: String,
+    pub created: Option<DateTime<Utc>>,
+    pub id: Option<String>,
     #[serde(rename = "updateAuthor")]
-    pub update_author: User,
-    pub updated: DateTime<Utc>,
+    pub update_author: Option<User>,
+    pub updated: Option<DateTime<Utc>>,
     pub visibility: Option<Visibility>,
     #[serde(rename = "self")]
-    pub self_link: String,
+    pub self_link: Option<String>,
     #[serde(flatten)]
     pub extra: Value,
 }

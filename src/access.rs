@@ -18,8 +18,11 @@ limitations under the License.
 // * https://docs.atlassian.com/software/jira/docs/api/REST/latest/
 // * https://docs.atlassian.com/jira-software/REST/latest/
 
+use serde::Serialize;
+
 use crate::errors::JiraQueryError;
 use crate::issue_model::{Issue, JqlResults};
+use crate::{Comment, User};
 
 // The prefix of every subsequent REST request.
 // This string comes directly after the host in the URL.
@@ -74,6 +77,8 @@ enum Method<'a> {
     Key(&'a str),
     Keys(&'a [&'a str]),
     Search(&'a str),
+    User(&'a str),
+    Myself,
 }
 
 impl<'a> Method<'a> {
@@ -82,6 +87,8 @@ impl<'a> Method<'a> {
             Self::Key(id) => format!("issue/{id}"),
             Self::Keys(ids) => format!("search?jql=id%20in%20({})", ids.join(",")),
             Self::Search(query) => format!("search?jql={query}"),
+            Self::User(id) => format!("user?accountId={id}"),
+            Self::Myself => "myself".to_string(),
         }
     }
 }
@@ -137,7 +144,7 @@ impl JiraInstance {
 
         // The `startAt` option is only valid with JQL. With a URL by key, it breaks the REST query.
         let start_at = match method {
-            Method::Key(_) => String::new(),
+            Method::Key(_) | Method::User(_) | Method::Myself => String::new(),
             Method::Keys(_) | Method::Search(_) => format!("&startAt={start_at}"),
         };
 
@@ -160,6 +167,25 @@ impl JiraInstance {
             Auth::Basic { user, password } => request_builder.basic_auth(user, Some(password)),
         };
         authenticated.send().await
+    }
+
+    /// Post the given body to the specified URL using the configured authentication.
+    async fn authenticated_post<T: Serialize + Sized>(
+        &self,
+        url: &str,
+        body: &T,
+    ) -> Result<reqwest::Response, reqwest::Error> {
+        let request_builder = self.client.post(url);
+        let authenticated = match &self.auth {
+            Auth::Anonymous => request_builder,
+            Auth::ApiKey(key) => request_builder.header("Authorization", &format!("Bearer {key}")),
+            Auth::Basic { user, password } => request_builder.basic_auth(user, Some(password)),
+        };
+        authenticated
+            .header("Content-Type", "application/json")
+            .json(body)
+            .send()
+            .await
     }
 
     // This method uses a separate implementation from `issues` because Jira provides a way
@@ -278,6 +304,80 @@ impl JiraInstance {
 
             Ok(issues)
         }
+    }
+
+    /// Access a Jira user by their user ID.
+    pub async fn user(
+        &self,
+        user_id: &str,
+    ) -> Result<User, Box<dyn std::error::Error + Send + Sync>> {
+        let user_url = self.path(&Method::User(user_id), 0);
+
+        let user = self
+            .authenticated_get(&user_url)
+            .await?
+            .json::<User>()
+            .await?;
+
+        Ok(user)
+    }
+
+    /// Access information about my own user account.
+    pub async fn myself(
+        &self,
+    ) -> Result<User, Box<dyn std::error::Error + Send + Sync>> {
+        let user_url = self.path(&Method::Myself, 0);
+
+        let user = self
+            .authenticated_get(&user_url)
+            .await?
+            .json::<User>()
+            .await?;
+
+        Ok(user)
+    }
+
+    /// Post a comment to a Jira issue.
+    ///
+    /// Specify `user_id` to post the comment as a specific user. Otherwise,
+    /// if `user_id` is None, you're posting the comment as yourself.
+    pub async fn post_comment(
+        &self,
+        issue_id: &str,
+        user_id: Option<&str>,
+        content: &str,
+    ) -> Result<Comment, Box<dyn std::error::Error + Send + Sync>> {
+        let url = self.path(&Method::Key(issue_id), 0) + "/comment";
+
+        log::debug!("Comment URL: {}", url);
+
+        let user = if let Some(user_id) = user_id {
+            let u = self.user(user_id).await?;
+            log::debug!("Commenting user: {:#?}", u);
+            Some(u)
+        } else {
+            log::debug!("Commenting as myself.");
+            None
+        };
+
+        let comment = Comment {
+            // If the author is None, we're commenting as "myself"
+            author: user,
+            body: content.to_owned(),
+            ..Default::default()
+        };
+
+        log::debug!("Prepared comment: {:#?}", comment);
+
+        let response = self.authenticated_post(&url, &comment).await?;
+
+        log::debug!("Response to comment: {:#?}", response);
+
+        let comment = response.json::<Comment>().await?;
+
+        log::debug!("Parsed comment: {:#?}", comment);
+
+        Ok(comment)
     }
 }
 
