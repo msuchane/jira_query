@@ -1,10 +1,10 @@
 [package]
 name = "jira_query"
 authors = ["Marek Suchánek <marek.suchanek@protonmail.com>"]
-version = "1.5.0"
+version = "1.6.0"
 edition = "2021"
 # Check the Rust version using `cargo msrv verify`.
-rust-version = "1.63"
+rust-version = "1.81"
 license = "Apache-2.0"
 description = "Access tickets on a remote Jira instance."
 readme = "README.md"
